@@ -1,0 +1,89 @@
+6.x-1.0
+
+[#875410] by kepol: add contentoptimizer to seo modules list, add t() to text
+[#833894] by ptitb: add destination to node edit url to get back to report
+[#653634] by kepol: hide nodewords_bypath report & module if using new nodewords
+[#784492] by kepol: remove sort on duplicates/meta tags column (does not work)
+
+6.x-1.0-beta7
+
+[#610904] by kepol: Use pager query for SEO reports
+[#679178] by kepol: Make referrer report max check number configurable
+[#694942] by kepol: Create empty array
+[#694942] by kepol with support from locomo!!: Check if tag content is array.
+[#710894] by kepol: get robots missing issue fixed with older nodewords
+[#710894] by kepol: Handle robots default and show arrays nicer
+[#710894] by kepol: only join with page_title table if page_title is installed!
+[#718780] by kepol: Check for null form data
+[#768220] by kepol: Get working with Dublin Core tags & add more comments
+[#768220] by kepol: Change wording for select list option
+[#784492] by kepol: Reworked code to make report columns sortable
+[#797240] by john_kenney & kepol: CSS tweaks
+
+6.x-1.0-beta6
+
+#597468 - google analytics naming convention
+#656100 - preg_match fix
+#679178 - check for empty urls in referrers report
+#655662 - add imagefield_tokens to seo modules list
+#649550 - duplicate fix
+#653630 - no page_title content
+#660584 - handle nodewords data structure
+* add featured_content to list of SEO modules
+* limit node words report to type='node' only for now
+
+6.x-1.0-beta5
+
+1) update logic to handle nodewords version 1.2 but support backwards
+   compatibility
+
+2) fix google analytics module name and add nodewords by node type, 
+   related content, and morelikethis modules to seo modules list
+
+3) add in pathauto report that checks the update action setting and provides
+   feedback on whether it is optimal or not
+
+4) css tweaks
+a) add error css and message for globalredirect & path_redirect when uninstalled
+b) fix error/ok css logic for page title report
+c) add in css error/ok to nodewords_bypath report
+
+5) bug fix - reports urls should be reports/seo/x not reports/seo_friend/x
+
+6.x-1.0-beta4
+
+1) bug fix so validation only happens upon node form save (not preview or delete)
+
+2) change the seochecklist module name due to new release
+
+3) add nodeapi hook to handle pathauto checkbox tracking if node_save is called
+directly rather than editing node through node edit form
+
+4) check that nodeword functions exist prior to calling them
+
+5) add SEO Info tab on node page / css changes for SEO Info block
+
+6.x-1.0-beta3
+
+1) bug fix for pathauto checkbox tracking
+
+2) css/style changes (courtesy of Nicholas Thompson)
+
+6.x-1.0-beta2
+
+1) Fixed issue because page_title changed table schema. Now checks if column
+name is 'nid' or 'id'.
+
+2) Added in referrers report though not yet tested (base code courtesy of 
+Nancy Wichmann)
+
+6.x-1.0-beta1
+
+Initial release with:
+
+1) page_title, nodewords, nodewords_bypath reports
+
+2) page_title, nodewords, nodewords_bypath configuration settings
+
+3) pathauto checkbox checking
+

@@ -1,0 +1,297 @@
+<?php
+// $Id: custom_403.module,v 1.1 2009/06/19 20:13:24 xcf33 Exp $
+
+/*
+ * @file
+ * This module is an extension the the content access module
+ * It provides the ability to designate custom 403 redirects
+ */
+ 
+ /*
+  * Implementation of hook_menu()
+  */
+function custom_403_menu() {
+  
+	/*
+	 * Configuration Page
+	 */
+	$items['admin/settings/custom_403'] = array(
+	'title' => 'Custom Access Denied Page',
+	'description' => 'Define custom 403 messages based on drupal roles',
+	'page callback' => 'drupal_get_form',
+	'page arguments' => array('custom_403_settings'),
+	'access arguments' => array('administer site configuration'),
+	'type' => MENU_NORMAL_ITEM,
+	);
+	
+	/*
+	 * Main Page Callback
+	 */
+	
+	$items['custom_403'] = array(
+		'title' => 'Access Denied',
+		'page callback' => 'custom_403_main',
+		'access callback' => TRUE,
+		'type' => MENU_CALLBACK,
+	);
+
+	return $items;
+  
+}
+  
+/*
+ * Configuration Page Callback
+ */
+function custom_403_settings() {
+
+/*
+ * General Settings
+ */
+
+	//fetch the available roles
+	$drupal_roles = custom_403_helper_fetch_roles();
+
+	$form['custom_403_gnl'] = array(
+	 '#type' => 'fieldset',
+	 '#title' => t('General Settings'),
+	 '#description' => t('General Settings for Custom Denied Page'),
+	 '#collapsible' => TRUE,
+	 'collapsed' => FALSE,
+	
+	);
+	
+	foreach($drupal_roles as $role)
+	{		
+		//replace spaces with underscore so that
+		//they can be saved properly into the variable
+		//table
+		$role = str_replace(' ', '_', $role);
+	
+		$form['custom_403_gnl']['custom_403_' . $role] = array (
+		 '#type' => 'textarea',
+		 '#title' => t('Access Denied Message for ' . '<strong>' . $role . '</strong>'),
+		 '#description' => t('Enter the custom access denied message for content (node) required by this role'),
+		 '#default_value' => variable_get('custom_403_' .$role, 'Access Denied'),
+		);
+	}
+	
+	return system_settings_form($form);
+
+}
+
+/*
+ * Implementation of hook_theme
+ */
+function custom_403_theme()
+{
+	return array(
+		'custom_403_messages' => array(
+			'arguments' => array($roles => NULL),
+		),
+	);
+}
+
+/*
+ * Thememing function for the output
+ */
+function theme_custom_403_messages($roles)
+{
+	$output = '<br /><div class="warning"><strong>You need one of the following role(s) to access this page</strong><ul>';
+	
+	$message = array();
+	
+	foreach($roles as $role)
+	{
+		$output .= "<li>$role</li>";
+		$role = str_replace(' ', '_', $role);
+	
+		$message[] = variable_get('custom_403_' . $role, 'access denied');
+	}
+	
+	$output .= '</ul></div><br />';
+
+	for($i = 0; $i < count($message); $i++)
+	{
+		$output .= '<p>' . $message[$i] . '</p>';
+	}
+	
+	return t($output);
+	
+}
+
+
+/*
+ * Implementation of hook_nodeapi
+ */
+function custom_403_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL)
+{	
+	//we simply want to capture the node id and store it in a session variable
+	switch($op)
+	{
+		case 'load':
+	
+		$_SESSION['custom_403_nid'] = $node->nid;
+		break;
+		
+	}
+}
+
+/*
+ * Page Callback
+ * -----------------------------------------------------
+ * This is the page callback for our custom 403 page
+ * Depending on the user role and the role required by 
+ * the node, the page callback will spit out custom 
+ * 403 messages. 
+ */
+function custom_403_main() {
+	
+	//Getting the user roles for the current user
+	global $user;
+	
+	$user_roles = array();
+	foreach($user->roles as $role)
+	{
+		 $user_roles[] = $role;
+	 }
+	sort($user_roles);
+	 
+	
+	// retrieve the 'view' content access roles, the function checks for general settings or
+	// it can be per_node settings that overrides the general settings
+	$view_node_access_roles = custom_403_check_access_settings($_SESSION['custom_403_nid']);
+	
+	//powerful array that describes the roles that the current user
+	//does not have for this page
+	$role_diff = array_diff($view_node_access_roles, $user_roles);
+	
+	return theme('custom_403_messages', $role_diff);
+
+}
+
+/*
+ * Helper Function that fetches the available roles 
+ */
+ function custom_403_helper_fetch_roles()
+ {
+	//fetch all the available roles and insert them
+	//into an associative array key = value
+	$result = db_query('SELECT name FROM {role}');
+	
+	$var_roles = array();
+	while ($data = db_fetch_object($result))
+	{
+		$var_roles[$data->name] = $data->name;
+	}
+	
+	return $var_roles;
+ }
+
+/*
+ * Check the given node to see if general settings or per_node setting should be 
+ * applied
+ */
+function custom_403_check_access_settings($nid)
+{
+	// load the node
+	$node = node_load($nid);
+	
+	// find the node type
+	$per_node_setting = custom_403_helper_get_content_access_settings('per_node');
+	$per_node_toggle = '';
+	
+	foreach($per_node_setting as $nodetype => $toggles)
+	{
+		if($nodetype == $node->type)
+		{
+			foreach($toggles as $toggle)
+			{
+				$per_node_toggle = $toggle;
+			}
+		}
+	}
+	
+	$view_access_setting_array = array();
+	// per node toggle = 0 means we use the general content access settings
+	if($per_node_toggle == '0')
+	{
+		$settings = custom_403_helper_get_content_access_settings('view');
+		
+		foreach($settings as $nodetype => $roles)
+		{
+			if($nodetype == $node->type)
+			{
+				foreach($roles as $role)
+				{
+					$view_access_settings_array[] = db_result(db_query("SELECT name FROM {role} WHERE rid = %d", $role));
+				}
+			}
+		}
+		
+	}
+	// else we will use the per_node content access settings
+	elseif($per_node_toggle == '1')
+	{
+		$view_access_settings_array = custom_403_helper_get_per_node_access($nid);
+	}
+	
+	return $view_access_settings_array;
+	
+}
+
+/*
+ * Get the default content access settings (first determination for node access)
+ */
+function custom_403_helper_get_content_access_settings($option = 'view')
+{
+	$custom_403_content_access_settings = variable_get('content_access_settings', '');
+	
+	$custom_403_view_access = array();
+	foreach($custom_403_content_access_settings as $op => $nodetypes)
+	{
+		// we just care about the view access
+		if($op == 'view' && $option == 'view')
+		{
+			foreach($nodetypes as $nodetype => $access_roles)
+			{
+				foreach($access_roles as $rid)
+				{
+					$custom_403_view_access[$nodetype][] = $rid;
+				}
+			}
+		}
+		if($op == 'per_node' && $option == 'per_node')
+		{
+			foreach($nodetypes as $nodetype => $toggle)
+			{
+					$custom_403_view_access[$nodetype][] = $toggle;
+			}
+		}
+	}
+	
+	return $custom_403_view_access;
+}
+
+/*
+ * If per_node_access is enabled, bypass the default content access settings and check for the specific node settings
+ */
+function custom_403_helper_get_per_node_access($nid)
+{
+	//Query the current node access settings
+	$node_access = unserialize(db_result(db_query('SELECT settings FROM {content_access} WHERE nid = %d', $nid)));
+	
+	$node_view_access_array = array();
+	foreach($node_access as $op => $access_roles)
+	{
+		if($op == 'view')
+		{
+			foreach($access_roles as $access_role)
+			{
+				$node_view_access_array[] = db_result(db_query("SELECT name FROM {role} WHERE rid = %d", $access_role));
+			}
+		}
+	}
+	
+	return $node_view_access_array;
+	
+}

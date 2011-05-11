@@ -1,0 +1,54 @@
+<?php
+// $Id: seo_checker.install,v 1.1.2.3 2009/07/30 13:56:20 miruoss Exp $
+
+/**
+ * @file
+ * Installer for the SEO Compliance Checker
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function seo_checker_install() {
+  variable_set('jquery_update_compression_type', 'none');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function seo_checker_uninstall() {
+  /* delete variables for types */
+  $types = node_get_types();
+  foreach ($types as $type) {
+    variable_del('seo_checker_'. $type->type);
+  }
+
+  variable_del('seo_checker_allow_failures');
+}
+
+/**
+ * This function should be called by modules that implement SEO rules
+ * when they are uninstalled. It cleans up their variables.
+ * @param string $module
+ *   The name of the submodule.
+ */
+function seo_checker_submodule_uninstall($modulename) {
+  /* delete variables holding thresholds */
+  $rules = module_invoke($modulename, 'register_seo_rules');
+  foreach ($rules as $rid => $rule) {
+    variable_del('seo_threshold_'. $rid);
+  }
+}
+
+/**
+ * Implementation of hook_update_N().
+ */
+function seo_checker_update_6100() {
+  $allow_failures = variable_get('seo_checker_allow_failures', 1);
+  if ($allow_failures == 0) {
+    variable_set('seo_checker_allow_failures', 'no-failures');
+  } elseif ($allow_failures == 1) {
+    variable_set('seo_checker_allow_failures', 'show-preview-only');
+  }
+  return array();
+}

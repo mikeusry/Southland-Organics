@@ -1,0 +1,108 @@
+<?php
+
+/**
+ * Implement hook_boot(). 
+ * Use hook_boot so the varible is set even for cached pages.
+ */
+function calais_marmoset_boot() {
+  if(!defined('CALAISMF_INCLUDE_DIR')) {
+    define('CALAISMF_INCLUDE_DIR', variable_get('calais_marmoset_calaismf_include_dir', NULL)); 
+  }
+}
+
+/**
+ * Implement hook_init();
+ */
+function calais_marmoset_init() {
+  $override = $_GET['overrideUserAgent'];
+  if($override) {
+    drupal_add_js(drupal_get_path('module', 'calais_marmoset') . "/calais_marmoset.js");
+  }
+}
+
+/**
+ * Implement hook_perm().
+ */
+function calais_marmoset_perm() {
+  return array('administer calais marmoset');
+}
+
+/**
+ * Implement hook_menu().
+ */
+function calais_marmoset_menu() {
+  $items = array();
+  $items['admin/settings/calais_marmoset'] = array(
+    'title' => t('Calais Marmoset Settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('calais_marmoset_admin_settings'),
+    'access arguments' => array('administer calais marmoset'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['node/%node/marmoset'] = array(
+		'title' => t('Marmoset'),  
+		'type' => MENU_LOCAL_TASK,
+		'weight' => 4,
+		'page callback' => 'check_marmoset',
+		'page arguments' => array(1),
+    'access arguments' => array('administer calais marmoset'),
+    'description' => t('Show Calais tags for this content'),
+  );
+  return $items;
+}
+
+/**
+ * callback for the marmoset node tab
+ */
+function check_marmoset($node) {
+  //drupal_add_css(drupal_get_path('module', 'marmoset') . "/calais_marmoset.css");
+	drupal_goto("node/$node->nid", "overrideUserAgent=true");	
+}
+
+/**
+ * return the admin form settings
+ *
+ */
+function calais_marmoset_admin_settings() {
+  $form = array();
+  $form['calais_marmoset_api_key'] = array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get('calais_marmoset_api_key', ''),
+    '#title' => t('Calais API Key'),
+    '#description' => t("<a href='http://opencalais.com/APIKey'>http://opencalais.com/APIKey</a>"),
+  );
+
+  $form['calais_marmoset_calaismf_include_dir'] = array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get('calais_marmoset_calaismf_include_dir', 
+      drupal_get_path("module", "calais_marmoset") . "/marmoset/public/calaismf/"),
+    '#title' => t('Path to Marmoset Library'),
+    '#description' => t("You should not have to change the default value."),
+  );
+
+  $form['calais_marmoset_UserAgentSubstringList'] = array(
+    '#type' => 'textarea',
+    '#title' => t('User Agent Substring List'),
+    '#description' => t("List of substrings to look for in the caller's User-Agent field, in order to determine whether it is a search robot.  Add each User-Agent string on a new line. <em>Important: Make sure the value you enter is specific, otherwise it might coincide with certain Web browsers, causing visitors to your site to see the Microformats data.</em>"),
+    '#default_value' => variable_get('calais_marmoset_UserAgentSubstringList', 'Slurp'),
+    '#cols' => 20,
+  );
+
+  $form['calais_marmoset_base_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Tag Base URL'),
+    '#description' => t('The URL string to append to the beginning of the tags that make a valid URL on the site'),
+    '#default_value' => variable_get('calais_marmoset_base_url', url('<front>', array('absolute'=> true)). "marmoset") ,
+  );
+
+  // 
+  return system_settings_form($form);
+}
+
+/**
+ * Views intergration.  Needed for the default view.
+ */
+function calais_marmoset_views_api() {
+  return array('api' => 2.0);
+}

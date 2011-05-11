@@ -1,0 +1,7 @@
+<?php
+// $Id
+
+function custom_403_uninstall() {
+  db_query("DELETE FROM {variable} WHERE name LIKE 'custom_403_%'");
+  
+}

@@ -1,0 +1,12 @@
+; $Id: basic_seo_rules.info,v 1.1.2.3 2009/05/25 09:47:28 miruoss Exp $
+name = 'Basic SEO Rules'
+description = 'Basic rules for the SEO compliance checker module'
+dependencies[] = "seo_checker"
+package = "SEO Compliance Checker"
+core = 6.x
+; Information added by drupal.org packaging script on 2009-11-15
+version = "6.x-1.4"
+core = "6.x"
+project = "seo_checker"
+datestamp = "1258289172"
+

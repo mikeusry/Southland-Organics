@@ -1,0 +1,11 @@
+name = SEO Friend
+description = A number of helpful features to increase your site's SEO friendliness.
+core = 6.x
+package = SEO
+
+; Information added by drupal.org packaging script on 2010-11-12
+version = "6.x-1.0"
+core = "6.x"
+project = "seo_friend"
+datestamp = "1289531765"
+

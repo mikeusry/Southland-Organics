@@ -1,0 +1,28 @@
+<?php
+// $Id:$
+
+/**
+ * @file
+ * Handles all things concerning The MailChimp-Ubercart E-Commerce 360 Installation, Upgrades, and Uninstallation.
+ */
+
+/**
+ * Implementation of hook_install()
+ */
+function uc_mailchimp_install() {
+	$field = array(
+        'description' => t('The uc_mailchimp subscribe status.'),
+        'type' => 'text',
+        'not null' => FALSE,
+      );
+    db_add_field($ret,'uc_orders','uc_mailchimp',$field);
+}
+
+/**
+ * Implementation of hook_uninstall()
+ */
+function uc_mailchimp_uninstall() {
+	db_drop_field($ret,'uc_orders','uc_mailchimp');
+    $sql = "DELETE FROM {variable} WHERE name LIKE 'uc_mailchimp%%'";
+	db_query($sql);
+}

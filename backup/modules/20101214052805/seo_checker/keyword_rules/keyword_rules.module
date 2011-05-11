@@ -1,0 +1,214 @@
+<?php
+// $Id: keyword_rules.module,v 1.2.2.8 2009/10/18 14:41:48 miruoss Exp $
+
+/**
+ * @file
+ * Implements some keyword based rules for the SEO Checker.
+ *
+ */
+
+/**
+ * Implementation of hook_menu().
+ * @return (array) menu items
+ */
+function keyword_rules_menu() {
+  $items['admin/settings/seo_checker/keyword_rules'] = array(
+    'title' => t('Keyword Rules'),
+    'description' => t('Settings for the keyword SEO rules module.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('keyword_rules_settings'),
+    'access arguments' => array('administer seo_checker configuration'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_register_seo_rules().
+ * @return (array) rules
+ */
+function keyword_rules_register_seo_rules() {
+  $rules['keyword_density'] = array(
+    'name' => t('Keyword density in the body'),
+    'description' => t('Checks the density of keywords over the the body of a page. Remark: too high density is not a good SEO.'),
+    'threshold type' => 'range',
+    'default threshold' => array(5, 20),
+    'callback' => 'keyword_rules_density',
+    'passed feedback' => t('Test passed.'),
+    'failed feedback' => t('Test failed, please make sure you use your keywords in the body but not too often.'),
+  );
+  $rules['keyword_in_title'] = array(
+    'name' => t('Usage of keywords in node titles'),
+    'description' => t('Checks if at least one of the keywords is used in the node title. If a keyword is used in the title, the result of this test indicates how early in the title the keyword appears. A threshold of 100% means that a keyword must be the first word in a node title while a threshold of 50% requires keywords to be in the first half of the node title.'),
+    'threshold type' => 'at_least',
+    'default threshold' => 50,
+    'callback' => 'keyword_rules_title',
+    'passed feedback' => t('Test passed.'),
+    'failed feedback' => t('Test failed, place your keywords early in your node title.'),
+  );
+  $rules['keyword_in_headings'] = array(
+    'name' => t('Usage of keywords in headings'),
+    'description' => t('Calculates the percentage of the heading-tags (e.g. &lt;h1&gt;,&lt;h2&gt;,...) in the node body that contain keywords.'),
+    'threshold type' => 'at_least',
+    'default threshold' => 50,
+    'callback' => 'keyword_rules_headings',
+    'passed feedback' => t('Test passed.'),
+    'failed feedback' => t('Test failed, use keywords in your heading-tags (e.g. &lt;h1&gt;,&lt;h2&gt;,... - Tags with lower numbers weigh more.)'),
+  );
+  return $rules;
+}
+
+/**
+ * Dervies the densitiy of keywords within the body of the node.
+ * @param object $form_values
+ */
+function keyword_rules_density($form_values) {
+  $tags = _keyword_rules_extract_tags($form_values);
+  if (count($tags) == 0) {
+    return 0;
+  }
+  $body = strip_tags($form_values['body']);
+  $words = preg_split('/\W+/', $body);
+  $total = count($words);
+  $nr_of_tags = 0;
+  foreach ($tags as $tag) {
+    $pos=-1;
+    while (($pos = seo_checker_wordipos($body, $tag, $pos+1)) !== FALSE) {
+      $nr_of_tags++;
+    }
+  }
+  return 100*$nr_of_tags/$total;
+}
+
+/**
+ * Checks if keywords are used in the node title. If they are used, the
+ * resulting score depends on how early the keywords occur in the title. 
+ * If a keyword is used as the first word in the title, the score will be 100%.
+ * @param object $form_values
+ */
+function keyword_rules_title($form_values) {
+  $tags = _keyword_rules_extract_tags($form_values);
+  $title = strtolower($form_values['title']);
+  $best_score = 1000; /* sentinel */
+  $best_tag = null;
+  foreach ($tags as $tag) {
+    if (($score = seo_checker_wordipos($title, $tag)) !== FALSE && $score < $best_score) {
+      $best_score = $score;
+      $best_tag = $tag;
+    }
+  }
+
+  /* no tags or tags not in title */
+  if (is_null($best_tag)) {
+    return 0;
+  }
+
+  /* calculate percentage score */
+  list($before, $after) = explode($best_tag, $title, 2);
+  preg_match_all  ('/\W+/', $before, $matches);
+  $words_before = count($matches[0]);
+  if ($words_before == 0) {
+    return 100;
+  } else {
+    preg_match_all  ('/\W+/', $after, $matches);
+    /* count the keyword itself as one oft he "words_after" */
+    $words_after = count($matches[0])+1;
+    return 100*$words_after/($words_before+$words_after);
+  }
+}
+
+function keyword_rules_headings($form_values) {
+  $tags = _keyword_rules_extract_tags($form_values);
+  $body = $form_values['body'];
+  if (!($nr_matches = preg_match_all('/<h(\d)>(.*?)<\/h\d>/i', $body, $matches, PREG_SET_ORDER))) {
+    return 100;
+  }
+
+  $good_weight = 0;
+  $bad_weight = 0;
+  foreach ($matches as $match) {
+    $weight = $match[1];
+    $heading = $match[2];
+    $found = 0;
+    foreach ($tags as $tag) {
+      $found += intval(seo_checker_wordipos($heading, $tag) !== FALSE);
+    }
+    if ($found > 0) {
+      $good_weight += $found/$weight;
+    } else {
+      $bad_weight += 1/$weight;
+    }
+  }
+  return 100*($good_weight / ($good_weight+$bad_weight));
+}
+
+/**
+ * Helper function to extract keywords from the submitted form values.
+ * @return
+ *   An array of keyword tags.
+ * @param object $form_values
+ *   The array of form values.
+ */
+function _keyword_rules_extract_tags($form_values) {
+  switch (variable_get('keyword_rules_keywords_driver', 'cck')) {
+    case 'nodewords':
+      $keywords = $form_values['nodewords']['keywords'];
+      break;
+    default:
+      $keywords = $form_values[variable_get('keyword_rules_keywords_field', 'field_seo_keywords')][0]['value'];
+      break;
+  }
+  return drupal_explode_tags(strtolower($keywords));
+}
+
+/**
+ * Defines the settings form.
+ */
+function keyword_rules_settings() {
+  drupal_add_js(drupal_get_path('module', 'keyword_rules') .'/js/admin.js');
+  $form = array();
+  $fields = array();
+  $fieldarr = content_fields();
+  foreach ($fieldarr as $label => $field) {
+    $fields[$label] = $field['field_name'];
+  }
+
+  $keyword_field_modules = array('cck' => 'cck');
+  if (module_exists('nodewords')) {
+    $keyword_field_modules['nodewords'] = 'Meta Tags';
+  }
+
+  if (count($keyword_field_modules) > 1) {
+    $form['keyword_rules_keywords_driver'] = array(
+      '#type' => 'radios',
+      '#title' => t('Keyword Field Provider Module'),
+      '#description' => t('Select what module to use to provide a field for keywords.'),
+      '#default_value' => variable_get('keyword_rules_keywords_driver', 'cck'),
+      '#options' => $keyword_field_modules,
+    );
+  } else {
+    $form['keyword_rules_keywords_driver'] = array(
+      '#type' => 'hidden',
+      '#value' => 'cck',
+    );
+  }
+
+  $form['keyword_rules_cck'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('CCK field selection'),
+    '#attributes' => array(
+      'id' => 'cck_settings',
+      'class' => 'keyword_rule_settings_fieldset',
+    ),
+  );
+
+  $form['keyword_rules_cck']['keyword_rules_keywords_field'] = array(
+    '#type' => 'select',
+    '#title' => t('Field defining the keywords'),
+    '#default_value' => variable_get('keyword_rules_keywords_field', 'field_seo_keywords'),
+    '#description' => t('Select the field that defines the keywords to be used for the checks.'),
+    '#options' => $fields,
+  );
+  return system_settings_form($form);
+}

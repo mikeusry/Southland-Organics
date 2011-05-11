@@ -1,0 +1,461 @@
+<?php
+// $Id:$
+
+/**
+ * @file
+ * Handles all things concerning The MailChimp-Ubercart E-Commerce 360 Integration.
+ *
+ * The MailChimp E-Commerce 360 module adds MailChimps E-Commerce 360 tracking to Ubercart Enabled sites.
+ */
+
+define('UC_MC_DEBUG',variable_get('uc_mailchimp_debug', NULL));
+define('UC_MC_ADMIN',user_access('administer store'));
+define('UC_MC_LOG',variable_get('uc_mailchimp_log', 1));
+
+
+
+/**
+ * Implementation of hook_menu()
+ */
+function uc_mailchimp_menu() {
+$items['admin/store/settings/mailchimp'] = array(
+    'title' => 'MailChimp Settings',
+    'description' => 'Settings for the Mailchimp Ecommerce API',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_mailchimp_settings'),
+    'access arguments' => array('administer store'),
+    'weight' => 0,
+);
+
+return $items;
+}
+
+/**
+ * Implementation of hook_ca_predicate()
+ */
+function uc_mailchimp_ca_predicate() {
+    $predicates = array();
+
+  // Setup a default predicate for customer checkout notifications.
+  $predicates['uc_mailchimp_ecom360_notification'] = array(
+    '#title' => t('Update MailChimp with E_Commerce 360 Data'),
+    '#description' => t('Update MailChimp with E_Commerce 360 Data.'),
+    '#class' => 'Mailchimp',
+    '#status' => 1,
+    '#trigger' => 'uc_checkout_complete',
+    '#actions' => array(
+      array(
+        '#name' => 'uc_mailchimp_ecom_update',
+        '#title' => t('Send order data to mailchimp'),
+        '#argument_map' => array(
+          'order' => 'order',
+        ),
+      ),
+    ),
+  );
+  return $predicates;
+}
+
+/**
+ * Implementation of hook_checkout_pane()
+ */
+function uc_mailchimp_checkout_pane() {
+  $panes[] = array('id' => 'uc_mailchimp',
+    'callback' => 'uc_checkout_pane_mailchimp',
+    'title' => t(variable_get('uc_mailchimp_checkout_pane_title','Subscription Options')),
+    'desc' => t('Allow customers to subscribe to MailChimp.'),
+    'weight' => 9,
+    'enabled' => FALSE,
+  );
+  return $panes;
+}
+
+/**
+ * Implementation of hook_order()
+ */
+function uc_mailchimp_order($op, &$arg1) {
+  switch ($op) {
+    case 'save' :
+        $sql = "UPDATE {uc_orders} SET uc_mailchimp = '%s' WHERE order_id = %d";
+        if(is_array($arg1->uc_mailchimp)){
+            db_query($sql, serialize($arg1->uc_mailchimp),$arg1->order_id);
+        }
+    break;
+    
+    case 'load' :
+        $arg1->uc_mailchimp = unserialize($arg1->uc_mailchimp);
+    break;
+  }
+    
+}
+
+/**
+ * uc_mailchimp Checkout Pane for Ubercart
+ */
+function uc_checkout_pane_mailchimp($op, &$arg1, $arg2) {
+  global $user;
+  switch ($op) {
+    case 'view':
+        $lists = _uc_mailchimp_call_api('lists');
+ foreach($lists as $list){
+  if (variable_get("uc_mailchimp_{$list['id']}_checkout_pane_enabled",0)) {
+    $contents[$list['id']] = array(
+    '#type' => 'checkbox',
+    '#title' => t(variable_get("uc_mailchimp_{$list['id']}_checkout_pane_label",'Subscribe To The '.$list['name'].' Mailing List')),
+    '#default_value' => variable_get("uc_mailchimp_{$list['id']}_checkout_pane_toggled",1),
+    );
+  }
+ }
+          return array('description' => variable_get('uc_mailchimp_checkout_pane_desc',''), 'contents' => $contents);
+        break;
+    case 'review':
+        $lists = _uc_mailchimp_call_api('lists');
+        foreach ($arg1->uc_mailchimp as $list => $toggle){
+            if($toggle){
+                $review[] = t(variable_get("uc_mailchimp_{$list}_checkout_pane_label",'Subscribe To The '.$lists->$list['name'].' Mailing List'));
+            }
+        }
+        return $review;
+    break;
+    case 'process':
+        $arg1->uc_mailchimp = $arg2;
+       
+    break;
+    case 'settings':
+       $form['uc_mailchimp_cart']["uc_mailchimp_checkout_pane_title"] = array(
+    '#type' => 'textfield',
+    '#title' => t('Checkout Pane Title'),
+    '#default_value' => variable_get('uc_mailchimp_checkout_pane_title','Subscription Options'),
+    );
+    $form['uc_mailchimp_cart']["uc_mailchimp_checkout_pane_desc"] = array(
+    '#type' => 'textarea',
+    '#title' => t('Checkout Pane Description'),
+    '#default_value' => variable_get('uc_mailchimp_checkout_pane_desc',''),
+    );
+ $lists = _uc_mailchimp_call_api('lists');
+ foreach($lists as $list){
+    $form['uc_mailchimp_cart']["uc_mailchimp_{$list['id']}"] = array(
+            '#type' => 'fieldset',
+            '#title' => t($list['name'].' List Settings'),
+            '#collapsible' => TRUE,
+            '#collapsed' => TRUE,
+    );
+    $form['uc_mailchimp_cart']["uc_mailchimp_{$list['id']}"]["uc_mailchimp_{$list['id']}_checkout_pane_enabled"] = array(
+       '#type' => 'checkbox',
+       '#title' => t('Enable this list on the Checkout Pane'),
+       '#default_value' => variable_get("uc_mailchimp_{$list['id']}_checkout_pane_enabled",0),
+       '#description' => 'Show a checkbox for subscribing to this list on the checkout pane.',
+    );
+    $form['uc_mailchimp_cart']["uc_mailchimp_{$list['id']}"]["uc_mailchimp_{$list['id']}_checkout_pane_toggled"] = array(
+       '#type' => 'select',
+       '#title' => t('Default Value for subscription checkbox'),
+       '#options' => array(1=>'Checked',0=>'Unchecked'),
+       '#default_value' => variable_get("uc_mailchimp_{$list['id']}_checkout_pane_toggled",1),
+       '#description' => 'Show a checkbox for subscribing to this list on the checkout pane.',
+    );
+    $form['uc_mailchimp_cart']["uc_mailchimp_{$list['id']}"]["uc_mailchimp_{$list['id']}_checkout_pane_label"] = array(
+    '#type' => 'textfield',
+    '#title' => t($list['name'].' Checkbox label'),
+    '#default_value' => variable_get("uc_mailchimp_{$list['id']}_checkout_pane_label",'Subscribe To The '.$list['name'].' Mailing List'),
+    );
+    $form['uc_mailchimp_cart']["uc_mailchimp_{$list['id']}"]["uc_mailchimp_{$list}_sub_message"] = array(
+    '#type' => 'textarea',
+    '#title' => t('Successful Subscription Message'),
+    '#default_value' => variable_get('uc_mailchimp_{$list}_sub_message',''),
+    '#description'=> t('Message displayed to users after checkout upon successfull subscription to list.')
+    );
+ }
+ return $form;
+    break;
+  }
+}
+
+/**
+ * General settings for the MailChimp Ecommerce API.
+ *
+ * @ingroup forms
+ */
+function uc_mailchimp_settings(){
+
+    $cat_options = array(
+    'node_type' => t('Node: Type'),
+    );
+    if(module_exists('taxonomy')){
+       $vocab = taxonomy_get_vocabularies();
+       foreach ($vocab as $vid => $voc) {
+        $vocabularies[$vid] = $voc->name;
+       }
+       $cat_options['Taxonomy Vocabularies'] = $vocabularies;
+    }
+ $form['uc_mailchimp_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Product Information Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => False,
+ );
+  $form['uc_mailchimp_settings']['category'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Category Settings'),
+    '#description' =>  "The MailChimp API requires category information to be sent for each product. By default we will send the Node Type as the Primary Category. You can select a Taxonomy Vocabulary as the primary or seconday category and set the first term (ordered by term weight) selected for the product as the value for the category. This works best if you have a certain vocabulary for products that can only contain one term per product, i.e. UberCarts Catalog terms."
+ );
+    $form['uc_mailchimp_settings']['category']['uc_mailchimp_primary_cat'] = array(
+       '#type' => 'select',
+       '#title' => t('Primary Category'),
+       '#options' => $cat_options,
+       '#default_value' => array(variable_get('uc_mailchimp_primary_cat', 'node_type')),
+    );
+    $form['uc_mailchimp_settings']['category']['uc_mailchimp_secondary_cat'] = array(
+       '#type' => 'select',
+       '#title' => t('Secondary Category'),
+       '#options' => array_merge(array(0 => '<none>'),$cat_options),
+       '#default_value' => array(variable_get('uc_mailchimp_secondary_cat', NULL)),
+    );
+    $form['uc_mailchip_settings']['uc_mailchimp_debug'] = array(
+       '#type' => 'checkbox',
+       '#title' => t('Operate in Debug Mode'),
+       '#default_value' => variable_get('uc_mailchimp_debug',NULL),
+       '#description' => 'Output error messages and order info to the screen for users with "administer store" permissions. If you are using the Email Campaign Framework, this will not print the error messages to the screen. You will have to check the logs for those.',
+    );
+    $form['uc_mailchip_settings']['uc_mailchimp_log'] = array(
+       '#type' => 'checkbox',
+       '#title' => t('Log order info sent to MailChimp'),
+       '#default_value' => variable_get('uc_mailchimp_log',1),
+       '#description' => 'Log all order info sent to MailChimp into the site log.',
+    );
+ $form['api_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('API Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+ );
+    $form['api_settings']['uc_mailchimp_cookie_time'] = array(
+       '#type' => 'select',
+       '#title' => t('Store Campign Info For'),
+       '#options' => array(1 => '1 Day',7 => '7 Days', 14 => '14 Days', 30 => '30 Days', 45 => '45 Days', 60 => '60 Days', 90 => '90 Days'),
+       '#default_value' => variable_get('uc_mailchimp_cookie_time',30),
+       '#description' => 'The length of time to store the cookie containing the campign info sent from MailChimp. Shorter times will more accurately reflect the number of purchase made as a direct result of the email campaign, but may miss customers who make a purchase after the cookie expires. Longer times will catch more purchasing desicions but may end up including purchases that were made but were not nessecarily influenced by the campaign. MailChimp recommends 30 days',
+    );
+     
+ return system_settings_form($form);
+}
+/**
+ * Performs  a mailchimp api call based on the module available. 
+ * 
+ * @param $method
+ * The MailChimp API method to call.
+ * 
+ * @param $params
+ * The MailChimp API paramaters for the method being called
+ */
+function _uc_mailchimp_call_api($method,$params=NULL) {
+    if(module_exists('emf_mailchimp')){
+        module_load_include('inc', 'emf_mailchimp','emf_mailchimp.api');
+        $result = _emf_mailchimp_api_call($method, $params);
+        if (!$result && UC_MC_DEBUG && UC_MC_ADMIN) {
+            drupal_set_message('MailChimp API Error. Please check the '.l('sites logs','admin/reports/dblog').' for error info.','error');
+             }
+    }
+    //If emf is not installed them we are using the stand alone mailchimp module.
+    elseif(module_exists('mailchimp')){
+       $q = _mailchimp_get_api_object();
+       $result = call_user_func_array(array($q, $method), $params);
+       if($q->errorMessage){
+       watchdog('uc_mailchimp', 'Code - '. $q->errorCode .', Message - '. $q->errorMessage, array(), WATCHDOG_ERROR);
+           if(UC_MC_DEBUG && UC_MC_ADMIN){
+            drupal_set_message('uc_mailchimp: Code - '. $q->errorCode .', Message - '. $q->errorMessage,'error');
+           }
+       $result = FALSE;
+       }
+    }
+    return $result;
+}
+/**
+ * Implementation of hook_ca_action().
+ */
+function uc_mailchimp_ca_action() {
+  $order_arg = array(
+    '#entity' => 'uc_order',
+    '#title' => t('Order'),
+  );
+  
+  $actions['uc_mailchimp_ecom_update'] = array(
+    '#title' => t('Send order data to mailchimp and subscription users to lists'),
+    '#category' => t('MailChimp'),
+    '#callback' => 'uc_mailchimp_action_ecom_update',
+    '#arguments' => array(
+      'order' => $order_arg,
+    ),
+  );
+  return $actions;
+}
+/**
+ * Send order data to Mailchimp for tracking.
+ * For more info on MailChimps E-Commerce 360 tracking visit http://www.mailchimp.com/blog/ecommerce-tracking-plugin/
+ * 
+ * @param $order
+ *  The Ubercart Order with all of it's info
+ *  
+ */
+function uc_mailchimp_action_ecom_update($order) {
+    global $user;
+    foreach ($order->uc_mailchimp as $list => $toggle) {//Foreach mailchimp list that this order is subscribing to.
+        if($toggle){//if the list element was toggled
+              //Parameters
+            $params = array($list,$order->primary_email,array('FNAME'=>$order->billing_first_name,'LNAME'=>$order->billing_last_name),'html',false,TRUE);
+            if(UC_MC_DEBUG && UC_MC_ADMIN){
+            drupal_set_message('<pre>'.print_r($params,1).'</pre>');
+            }
+            $subscribe = _uc_mailchimp_call_api('listSubscribe',$params);
+            if($subscribe){
+                drupal_set_message(variable_get("uc_mailchimp_{$list}_sub_message",''));
+            }
+        }
+    }
+    //if The MailChimp Variables are not present then do nothing
+    if (!isset($_COOKIE['mailchimp_campaign_id']) || !isset($_COOKIE['mailchimp_email_id'])){
+                return ;
+    }
+    
+    //Pull the shipping and tax out of the line items
+    $tax = 0;
+    $shipping = 0;
+    foreach($order->line_items as $item){
+        if($item['type']=='shipping'){
+            $shipping += $item['amount'];
+        }
+        if($item['type'] == 'tax'){
+            $tax += $item['amount'];
+        }
+    }
+    //Set up the default order info
+    $mcorder = array(
+                    'id' => $order->order_id,
+                    'total'=>$order->order_total,
+                    'shipping'=>$shipping,
+                    'tax'  =>$tax,
+                    'items'=>array(),
+                    'store_id'=>variable_get('uc_store_name', NULL),
+                    'store_name' => $_SERVER['SERVER_NAME'],
+                    'campaign_id'=>$_COOKIE['mailchimp_campaign_id'],
+                    'email_id'=>$_COOKIE['mailchimp_email_id'],
+                    'plugin_id'=>1228 //MailChimp Plugin ID. Don't change or the module won't work;
+                    );
+    //Get the Category Settings
+    $primary_cat = variable_get('uc_mailchimp_primary_cat', 'node_type');
+    $seconday_cat = variable_get('uc_mailchimp_seconday_cat', 0);
+    //Get the individual Products
+    foreach($order->products as $line=>$product){
+        $product = (array)$product;//I had already typed all the product stuff out as an array then realized it's an object. Thank you type-casting
+        $node = node_load($product['nid']);
+                $item = array();
+                $item['line_num'] = $line;
+                $item['product_id'] = $product['order_product_id'];
+                $item['product_name'] = $product['title'];
+                $item['sku'] = $product['model'];
+                $item['qty'] = $product['qty'];
+                $item['cost'] = $product['price'];
+                $item['category_id'] = '';
+                $item['category_name'] = '';
+                
+                if (is_numeric($primary_cat)) {
+                    //Get the Node taxonomy terms
+                    if(module_exists('taxonomy')){
+                       $terms = taxonomy_node_get_terms_by_vocabulary($node, $primary_cat);
+                       //This is kind of a bad way of handling this but I will work on it to find a better long term solution
+                       $term = array_shift($terms);
+                        $item['category_name'] = $term->name;
+                        $item['category_id'] = $term->tid;
+                    }
+                }
+                if(empty($item['category_id']) || $primary_cat == 'node_type'){
+                    foreach(str_split($node->type) as $char){
+                        $item['category_id'].=ord($char);
+                    }
+                    $item['category_name']=$node->type;
+                }
+                if($seconday_cat){
+                    if($secondary_cat == 'node_type'){
+                        $item['category_name'] .= ' - ' . $node->type;
+                    }
+                    else{
+                        if(module_exists('taxonomy')){
+                            $terms = taxonomy_node_get_terms_by_vocabulary($node, $secondary_cat);
+                            //This is kind of a bad way of handling this but I will work on it to find a better long term solution
+                            $term = array_shift($terms);
+                            if (!empty($term->name)) {
+                                $item['category_name'] .= ' - ' . $term->name;
+                            }
+                        }
+                    }
+                }
+                $mcorder['items'][] = $item;
+    }
+    $result = _uc_mailchimp_call_api('campaignEcommAddOrder',array($mcorder));
+    
+    if(UC_MC_LOG){
+        watchdog('uc_mailchimp_order','Order Info : !error',array('!error' => print_r($mc_order,1)),WATCHDOG_INFO);
+    }
+    if(UC_MC_DEBUG && UC_MC_ADMIN){
+       drupal_set_message('Order Info: <pre>'.print_r($mcorder,1).'</pre>', 'warning');
+    }
+    if($result == TRUE && UC_MC_DEBUG && UC_MC_ADMIN) {
+        drupal_set_message('uc_mailchimp: Order info successfully sent to MailChimp');
+    }
+    
+    return;
+}
+
+/**
+ * Implementation of hook_init()
+ */
+function uc_mailchimp_init() {
+ //stores the cookies for X days
+$time = time()+60*60*24*variable_get('uc_mailchimp_cookie_time',30);
+            if (isset($_REQUEST['mc_cid'])){
+                setcookie('mailchimp_campaign_id',trim($_REQUEST['mc_cid']), $time);
+            }
+            if (isset($_REQUEST['mc_eid'])){
+                setcookie('mailchimp_email_id',trim($_REQUEST['mc_eid']), $time);
+            }
+    $path="admin*";
+    if(drupal_match_path($_GET['q'],$path) && (!module_exists('mailchimp') && !module_exists('emf_mailchimp'))){
+        drupal_set_message('You have installed '.l('Ubercart MailChimp','admin/store/settings/mailchimp').' but do not have one of the required Mailchimp API frameworks installed. Please visit the settings page for more info.');
+    }
+            
+}
+
+/**
+ * Implementation of hook_mailchimp_merge_keys()
+ */
+function uc_mailchimp_mailchimp_merge_keys() {
+return array(
+'uc_customer_first' => 'UC: Customer First Name',
+'uc_customer_last' => 'UC: Customer Last Name'
+);
+}
+
+/**
+ * Implementation of hook_mailchimp_merge_values()
+ */
+function uc_mailchimp_mailchimp_merge_values($user) {
+    $out = array('uc_customer_first' => '', 'uc_customer_last' => ''); 
+$sql = 'SELECT billing_first_name first, billing_last_name last FROM {uc_orders} WHERE uid = %d';
+ $name = db_fetch_object(db_query($sql,$user->uid));
+ if($name){
+    foreach ($name as $key =>$val) {
+      $out["uc_customer_{$key}"] = $val;
+    }
+ }
+ return $out;
+}
+
+/**
+ * Implementation of hook_schema_alter()
+ */
+function uc_mailchimp_schema_alter(&$schema) {
+    $schema['uc_orders']['fields']['uc_mailchimp'] = array(
+        'description' => t('The uc_mailchimp subscribe status.'),
+        'type' => 'text',
+        'not null' => FALSE,
+      );    
+}

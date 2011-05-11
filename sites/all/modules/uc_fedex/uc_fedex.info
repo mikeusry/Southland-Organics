@@ -1,0 +1,15 @@
+; $Id: uc_fedex.info,v 1.2 2009/04/07 22:28:31 tr Exp $
+name = FedEx
+description = Integration of FedEx Web Services API with Ubercart.
+dependencies[] = uc_quote
+package = Ubercart - fulfillment
+
+core = 6.x
+php = 5.0
+
+; Information added by drupal.org packaging script on 2009-08-22
+version = "6.x-2.0"
+core = "6.x"
+project = "uc_fedex"
+datestamp = "1250917297"
+

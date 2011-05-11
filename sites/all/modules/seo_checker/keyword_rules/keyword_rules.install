@@ -1,0 +1,60 @@
+<?php
+// $Id: keyword_rules.install,v 1.1.2.5 2009/04/01 09:27:29 miruoss Exp $
+
+/**
+ * @file
+ * Installer for the Keyword Rules for the SEO Checker
+ */
+
+
+require_once(drupal_get_path('module', 'content') .'/includes/content.crud.inc');
+define('SEO_KEYWORD_FIELD_NAME', 'field_seo_keywords');
+
+/**
+ * Implementation of hook_install().
+ */
+function keyword_rules_install() {
+  /* create cck fields and assign them to page and story. */
+  $types = array_keys(node_get_types());
+  $field_created = FALSE;
+  $field = array(
+    'field_name' => SEO_KEYWORD_FIELD_NAME,
+    'type_name' => 'page',
+    'type' => 'text',
+    'widget_type' => 'text_textfield',
+    'label' => t('Keywords'),
+    'description' => t('Enter a comma separated list of keywords describing the content of this page'),
+  );
+  if (in_array('page', $types)) {
+    content_field_instance_create($field);
+    drupal_set_message(t('A new cck field called <b>Keywords</b> has been created and assigned to the content type "page".'));
+    $field_created = TRUE;
+  }
+  if (in_array('story', $types)) {
+    $field['type_name'] = 'story';
+    content_field_instance_create($field);
+    drupal_set_message(t('A new cck field called <b>Keywords</b> has been created and assigned to the content type "story".'));
+    $field_created = TRUE;
+  }
+
+  /* if no field was created, display a warning to the user */
+  if (!$field_created) {
+    drupal_set_message(t('
+      In order to be able to use the Keyword Rules you have to create a CCK field
+      for keywords and assign it to the content types that use the SEO Checker.
+      Afterwards you should select this field in the '. l('Keyword Rules settings',
+      'admin/settings/seo_checker/keyword_rules') .'.'), 'warning');
+  }
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function keyword_rules_uninstall() {
+  include_once(drupal_get_path('module', 'seo_checker') .'/seo_checker.install');
+  content_field_instance_delete(SEO_KEYWORD_FIELD_NAME, 'page');
+  content_field_instance_delete(SEO_KEYWORD_FIELD_NAME, 'story');
+  variable_del('keyword_rules_keywords_field');
+
+  seo_checker_submodule_uninstall('keyword_rules');
+}

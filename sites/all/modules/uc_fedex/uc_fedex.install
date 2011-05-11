@@ -1,0 +1,55 @@
+<?php
+// $Id: uc_fedex.install,v 1.5 2009/06/07 18:21:56 tr Exp $
+
+
+/**
+ * Implementation of hook_requirements().
+ */
+function uc_fedex_requirements($phase) {
+  $t = get_t();
+
+  // Check that the PHP SOAP extension is loaded
+  $has_soap = extension_loaded('soap');
+
+  $requirements['uc_fedex_soap'] = array(
+    'title' => $t('SOAP'),
+    'value' => $has_soap ? $t('Installed') : $t('Not Installed'),
+  );
+
+  if (!$has_soap) {
+    $requirements['uc_fedex_soap']['severity'] = REQUIREMENT_ERROR;
+    $requirements['uc_fedex_soap']['description'] = $t("The FedEx API requires the PHP <a href='!soap_url'>SOAP</a> library.", array('!soap_url' => 'http://www.php.net/soap'));
+  }
+
+  return $requirements;
+}
+
+
+/**
+ * Implementation of hook_uninstall().
+ *
+ * Removes all tables and variables inserted into the
+ * database by this module.
+ */
+function uc_fedex_uninstall() {
+
+  // Remove all module variables from the database
+  variable_del('uc_fedex_user_credential_key');
+  variable_del('uc_fedex_user_credential_password');
+  variable_del('uc_fedex_account_number');
+  variable_del('uc_fedex_meter_number');
+  variable_del('uc_fedex_server_role');
+
+  variable_del('uc_fedex_services');
+  variable_del('uc_fedex_all_in_one');
+  variable_del('uc_fedex_quote_type');
+  variable_del('uc_fedex_dropoff_type');
+  variable_del('uc_fedex_package_type');
+  variable_del('uc_fedex_residential_quotes');
+  variable_del('uc_fedex_insurance');
+
+  variable_del('uc_fedex_rate_markup');
+  variable_del('uc_fedex_rate_markup_type');
+  variable_del('uc_fedex_weight_markup');
+  variable_del('uc_fedex_weight_markup_type');
+}

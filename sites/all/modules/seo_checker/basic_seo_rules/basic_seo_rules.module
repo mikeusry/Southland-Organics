@@ -1,0 +1,110 @@
+<?php
+// $Id: basic_seo_rules.module,v 1.1.2.6 2009/11/07 14:00:41 miruoss Exp $
+
+/**
+ * @file
+ * Basic SEO rules for the SEO Checker
+ */
+
+/**
+ * Implementation of hook_register_seo_rules().
+ * @return (array) rules
+ */
+function basic_seo_rules_register_seo_rules() {
+  $rules['alt_attributes'] = array(
+    'name' => t('Alt attributes in &lt;img&gt; - tags'),
+    'description' => t('Checks if all the &lt;img&gt; tags in the body have an alt attribute.'),
+    'threshold type' => 'at_least',
+    'default threshold' => 100,
+    'callback' => 'basic_seo_rules_alt_attribute',
+    'passed feedback' => t('Test passed.'),
+    'failed feedback' => t('Test failed, please make sure your images contain an alternative text.'),
+  );
+  $rules['title_attributes'] = array(
+    'name' => t('Title attributes in &lt;a href&gt; - tags'),
+    'description' => t('Checks if all the &lt;a href&gt; tags have a title attribute.'),
+    'threshold type' => 'at_least',
+    'default threshold' => 100,
+    'callback' => 'basic_seo_rules_title_attribute',
+    'passed feedback' => t('Test passed.'),
+    'failed feedback' => t('Test failed, please make sure your links contain a title attribute.'),
+  );
+  return $rules;
+}
+
+/********************************* CALLBACKS *********************************/
+
+/**
+ * Implements the alt attribute in <img>-tags check.
+ * @return (int) result
+ * @param array $form_values
+ */
+function basic_seo_rules_alt_attribute($form_values) {
+  $total = 0;
+  $successful = 0;
+
+  /* Fetch image CCK fields for this node type */
+  $content_info = content_types($form_values['type']);
+  $fields = $content_info['fields'];
+  $image_fields = array();
+  /* iterate through all the fields */
+  foreach ($fields as $field) {
+    if ($field['type'] == 'filefield' && $field['widget']['module'] == 'imagefield' && $field['widget']['custom_alt'] == TRUE && is_array($form_values[$field['field_name']])) {
+      /* iterate through all the submitted image fields */
+      foreach ($form_values[$field['field_name']] as $image) {
+        /* only check if an image was submitted */
+        if ($image['fid'] != 0) {
+          $total++;
+          if (!empty($image['data']['alt'])) {
+            $successful++;
+          }
+        }
+      }
+    }
+  }
+
+  /* Check for image_attattach images */
+  if (variable_get('image_attach_'. $form_values['type'], FALSE)) {
+    $total++;
+    if (!empty($form_values['image_title'])) {
+      $successful++;
+    }
+  }
+
+  if (!preg_match_all('/<img[^>]+>/i', $form_values['body'], $matches) && $total == 0) {
+    return 100;
+  }
+
+  /* check content */
+  if (!empty($matches)) {
+    foreach ($matches[0] as $image_tag) {
+      if (preg_match('/alt=(\S{3,})/i', $image_tag)) {
+        $successful++;
+      }
+      $total++;
+    }
+  }
+  
+  return 100*$successful/$total;
+}
+
+/**
+ * Implements the title attribute in <a href>-tags check.
+ * @return (int) result
+ * @param array $form_values
+ */
+function basic_seo_rules_title_attribute($form_values) {
+  if (!preg_match_all('/<a[^>]+href[^>]*>/i', $form_values['body'], $matches)) {
+    return 100;
+  }
+
+  $total = 0;
+  $successful = 0;
+  foreach ($matches[0] as $ahref_tag) {
+    if (preg_match('/title=(\S{3,})/i', $ahref_tag)) {
+      $successful++;
+    }
+    $total++;
+  }
+  return 100*$successful/$total;
+}

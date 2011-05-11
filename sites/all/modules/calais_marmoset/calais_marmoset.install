@@ -1,0 +1,39 @@
+<?php
+
+function calais_marmoset_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+  
+  if($phase == 'runtime') {
+    $requirements['marmoset'] = array(
+      'title' => $t('Marmoset Location'),
+      'value' => $t('Install Path Set'),
+    );
+
+    if(!defined('CALAISMF_INCLUDE_DIR')) {
+      $desc = 'The CALAISMF_INCLUDE_DIR variable for marmoset needs to be set.  Please visit ';
+      $desc .= l('admin/settings/calais_marmoset', 'admin/settings/calais_marmoset') . " and set the variable.";
+      $requirements['marmoset']['description'] = $t($desc); 
+      $requirements['marmoset']['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+  
+  if($phase == 'install') {
+    $requirements['curl'] = array(
+      'title' => $t('CURL'),
+      //'value' => "Installed"
+    );
+
+    if(!function_exists('curl_init')) {
+      $requirements['curl']['description'] = $t('CURL is not available.  Please install CURL');
+      $requirements['curl']['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+  return $requirements;
+}
+
+function calais_marmoset_uninstall() {
+  $sql = "DELETE FROM {system} WHERE name = 'calais_marmoset'";
+  $result = db_query($sql);
+  variable_del('calais_marmoset');
+}

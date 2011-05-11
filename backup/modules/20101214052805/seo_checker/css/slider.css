@@ -1,0 +1,33 @@
+.ui-slider, .ui-slider-1 {
+  background-image:url(../img/slider-bg-1.png);
+}
+
+.ui-slider, .ui-slider-1 {
+  background-image:url(../img/slider-bg-1.png);
+}
+
+.ui-slider {
+  background-position:center center;
+  background-repeat:no-repeat;
+  height:23px;
+  position:relative;
+  width:200px;
+}
+
+.ui-slider-handle {
+  background-image:url(../img/slider-handle.gif);
+  height:23px;
+  left:0;
+  position:absolute;
+  top:0;
+  width:12px;
+  z-index:1;
+}
+
+.ui-slider-range {
+  background:#50A029 none repeat scroll 0 0;
+  height:100%;
+  opacity:0.3;
+  position:absolute;
+  width:100%;
+}

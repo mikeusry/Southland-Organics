@@ -1,0 +1,12 @@
+; $Id: faq_ask.info,v 1.2.2.2.2.2 2010/06/15 16:14:13 stenjo Exp $
+name = Faq_Ask
+description = "Allows an unanswered question 'queue' for the FAQ module."
+dependencies[] = faq
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-07-04
+version = "6.x-2.1"
+core = "6.x"
+project = "faq_ask"
+datestamp = "1278282610"
+

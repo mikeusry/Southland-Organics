@@ -1,0 +1,121 @@
+# Michael Ruoss <marabu@olymp.ch>, 2009.
+msgid ""
+msgstr ""
+"Project-Id-Version: modules-seo_checker\n"
+"POT-Creation-Date: 2009-04-01 18:12+0200\n"
+"PO-Revision-Date: 2009-10-18 15:33+0200\n"
+"Last-Translator: Michael Ruoss <marabu@olymp.ch>\n"
+"Language-Team: Deutsch <>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Poedit-Language: German\n"
+"X-Generator: Lokalize 0.3\n"
+
+#: seo_checker.module:29
+msgid "SEO Checker"
+msgstr "SEO Checker"
+
+#: seo_checker.module:30
+msgid "Manage SEO Checker"
+msgstr "SEO Checker Verwalten"
+
+#: seo_checker.module:37
+msgid "SEO Rule Thresholds"
+msgstr "Grenzwerte für SEO Regeln"
+
+#: seo_checker.module:38
+msgid "Set the tresholds for the different SEO rules."
+msgstr "Setzen Sie die Grenzwerte für die verschiedenen SEO Regeln."
+
+#: seo_checker.module:90
+msgid "The function <i>%s()</i> for seo_checker rule <b>%s</b> was not found."
+msgstr "Die Funktion <i>%s()</li> für die seo_checker Regel <b>%s</b> wurde nicht gefunden."
+
+#: seo_checker.module:132
+msgid "SEO Check Results"
+msgstr "SEO Check Resultate"
+
+#: seo_checker.module:139
+msgid "The SEO compliance check was not successful. Check the table and modify your content as required."
+msgstr "Der SEO Check war nicht erfolgreich. Sehen Sie in der Tabelle mit den Resultaten nach und ändern Sie Ihren Inhalt wie beschrieben."
+
+#: seo_checker.module:149
+msgid "Enable SEO checking"
+msgstr "Seo Checks einschalten"
+
+#: seo_checker.module:151
+msgid "Check this box to enable SEO checking for this node type."
+msgstr "Markieren Sie dieses Kästchen, um SEO Checks für diesen Inhaltstyp einzuschalten."
+
+#: seo_checker.module:0
+msgid "seo_checker"
+msgstr "seo_checker"
+
+#: seo_checker.info:0;0
+#: basic_seo_rules/basic_seo_rules.info:0
+#: keyword_rules/keyword_rules.info:0
+msgid "SEO Compliance Checker"
+msgstr "SEO Checker"
+
+#: seo_checker.info:0
+msgid "'Checks the SEO compliance of a node at it's creation/modification'"
+msgstr "'Überprüft die Einhaltung von SEO Regeln von Nodes bei deren Erstellung und Modifizierung'"
+
+#: inc/seo_checker.admin.inc:34
+msgid "General settings."
+msgstr "Allgemeine Einstellungen."
+
+#: inc/seo_checker.admin.inc:40
+msgid "Allow check failures"
+msgstr "Fehlerhafte Checks erlauben"
+
+#: inc/seo_checker.admin.inc:42
+msgid "Allow previews to be saved even if not all checks are successful."
+msgstr "Das Speichern von Inhalten mit fehlerhaften Checks erlauben."
+
+#: inc/seo_checker.admin.inc:47
+msgid "Thresholds for the SEO rules."
+msgstr "Grenzwerte für SEO Regeln."
+
+#: inc/seo_checker.admin.inc:49
+msgid "For the following rules, set the threshold in % where the test should be considered as passed. Depending on the type of the rule, you can either chose 0 or 100 sometimes a value in between. <b>A threshold of 0% disables a test.</b> Results of disabled tests will not be displayed."
+msgstr "Setzen Sie für die folgenden Regeln die Grenzwerte, welche für das Bestehen des jeweiligen Tests notwendig sind, in Prozent. Abhänging vom Typ der Regel können Sie nur einige oder alle Werte zwischen 0 und 100 auswählen. Manchmal kann auch ein Bereich gewählt werden, in welchem der Test als erfolgreich gilt. Ein Grenzwert von 0% deaktiviert einen Test."
+
+#: inc/seo_checker.theme.inc:75
+msgid "Rule"
+msgstr "Regel"
+
+#: inc/seo_checker.theme.inc:75
+msgid "Message"
+msgstr "Nachricht"
+
+#: inc/seo_checker.theme.inc:75
+msgid "Achieved"
+msgstr "Erreicht"
+
+#: inc/seo_checker.theme.inc:75
+msgid "Required"
+msgstr "Benötigt"
+
+#: inc/seo_checker.theme.inc:75
+msgid "Passed"
+msgstr "Bestanden"
+
+msgid "Allow check failures and only show the check results on node previews."
+msgstr "Fehlerhafte checks erlauben und die Resultate nur auf der Vorschau von Nodes zeigen."
+
+msgid "Allow check failures and also show the results when nodes are saved."
+msgstr "Fehlerhafte checks erlauben und die Resultate auch anzeigen, wenn Nodes gespeichert werden."
+
+msgid "Don't allow nodes to be saved as long as they keep failing on some tests."
+msgstr "Nodes sollten nicht gespeichert werden können, solange sie nicht alle SEO Regeln erfüllen."
+
+msgid "Please decide if SEO check failures should be allowed and in what cases check results should be displayed."
+msgstr "Bitte entscheiden Sie, ob Sie fehlerhafte checks erlauben wollen und in welchen Fällen die Resultate angezeigt werden sollen."
+
+msgid "Check policy and display settings"
+msgstr "Richtlinien der SEO Checks und der Resultatanzeige"
+
+

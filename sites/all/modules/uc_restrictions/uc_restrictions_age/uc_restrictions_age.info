@@ -1,0 +1,12 @@
+; $Id: uc_restrictions_age.info,v 1.2 2009/01/27 23:43:42 islco Exp $
+name = Ubercart Restrictions - Age
+description = Restrict ordering by User Age
+dependencies[] = uc_restrictions
+package = Ubercart - restrictions
+core = 6.x
+; Information added by drupal.org packaging script on 2010-03-19
+version = "6.x-1.2"
+core = "6.x"
+project = "uc_restrictions"
+datestamp = "1269016513"
+

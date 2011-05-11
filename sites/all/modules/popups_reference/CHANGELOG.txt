@@ -1,0 +1,31 @@
+Drupal-6-1-0
+  * No changes since rc3.
+
+Drupal-6-1-0-RC3
+ * Recommended for use with Popups API 6.x-1.2
+Bug Fixes
+ * http://drupal.org/node/390146 (cYu) - Allow users with "admin nodes" permission to see links.
+ * http://drupal.org/node/388406 - Only autofill a single autocomplete field if there are mutliples.
+ 
+Drupal-6-1-0-RC2
+Bug Fixes
+ * http://drupal.org/node/361964 (DeFr) - Bad unicode in autocomplete
+ * http://drupal.org/node/379576 - RC1 checkbox showing up on all fields.
+Other
+ * http://drupal.org/node/380932 (KarenS) - Setting min php to 5.0 in .info file.
+ 
+Drupal-6-1-0-RC1
+New Features
+ * http://drupal.org/node/310019 - Checkbox to toggle the "Add New:" links per field. Funded by Agaric Design.
+ * http://drupal.org/node/308589 - Select the newly created node (requres Popups API 1.2-ALPHA1 or newer). Funded by Agaric Design
+ * Added support for radio buttons widget.
+ * http://drupal.org/node/359524 by Cloudy - use human type names in link text.
+Other 
+ * Better comments and function documentation.
+ 
+Drupal-6--1-0-BETA2
+ * http://drupal.org/node/322600 - test if user has permission to do any adds before showing "Add new" text.
+ * http://drupal.org/node/325720 (jhodgdon ) - fix for content types with '_'s in them.
+
+Drupal-6--1-0-BETA1
+* Working w/Popups Api RC2

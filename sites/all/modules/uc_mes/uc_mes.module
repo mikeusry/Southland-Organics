@@ -1,0 +1,391 @@
+<?php
+// $Id: uc_mes.module,v 1.4.2.12 2009/11/19 12:00:00 brice Exp $
+
+/**
+ * @file
+ * Process payments using MeS Payment Gateway.
+ *
+ * 
+ */
+
+
+/**
+ * Implementation of hook_menu().
+ */
+function uc_mes_menu() {
+
+  $items = array();
+
+    $items[] = array(
+	  'path' => 'blog/feed', 
+	  'title' => t('Ben RSS feed'),
+      'callback' => 'blog_feed',
+      'type' => MENU_NORMAL_ITEM);
+  
+  return $items;
+}
+
+function uc_mes_silent_post_access() {
+  return TRUE;
+}
+
+/**
+ * Implementation of hook_payment_gateway().
+ */
+function uc_mes_payment_gateway() {
+  $gateways[] = array(
+    'id' => 'mes',
+    'title' => t('Merchant e-Solutions'),
+    'description' => t('Process credit card payments using the Merchant e-Solutions Payment Gateway.'),
+    'settings' => 'uc_mes_settings_form',
+    'credit' => 'uc_mes_charge',
+    'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE),
+  );
+
+  return $gateways;
+}
+
+/**
+ * Callback for payment gateway settings.
+ */
+function uc_mes_settings_form() {
+
+  $form['api_id_key'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('API Profile ID and Profile Key'),
+    '#description' => t('The Profile ID and Key are obtained from your MeS VAR form, Certification Manager, or sales rep.'),
+  );
+  $form['api_id_key']['uc_mes_api_profile_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Profile ID'),
+    '#default_value' => variable_get('uc_mes_api_profile_id', ''),
+  );
+  $form['api_id_key']['uc_mes_api_profile_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Profile Key'),
+    '#default_value' => variable_get('uc_mes_api_profile_key', ''),
+  );
+
+  $form['mes_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('MES settings'),
+    '#description' => t('These settings pertain to the MeS Payment Gateway.'),
+  );
+  $form['mes_settings']['uc_mes_txn_mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('Transaction mode'),
+    '#description' => t('Live or Simulated transactions.<br/>Be sure to switch to live transactions when testing is done.'),
+    '#options' => array(
+      'live' => t('Live transactions'),
+      'cert' => t('Simulated transactions'),
+    ),
+    '#default_value' => variable_get('uc_mes_txn_mode', 'cert'),
+  );
+
+  $form['mes_settings']['uc_mes_response_debug'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Log full API response messages for debugging?'),
+    '#default_value' => variable_get('uc_mes_response_debug', FALSE),
+  );
+
+  return $form;
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function uc_mes_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'uc_payment_gateways_form') {
+    $form['#submit'][] = 'uc_mes_payment_gateway_settings_submit';
+  }
+}
+
+// Submit handler for payment gateway settings form to encrypt fields.
+function uc_mes_payment_gateway_settings_submit($form, &$form_state) {
+  
+  // Encryption has been enabled.
+  if ($key = uc_credit_encryption_key()) {
+    $crypt = new uc_encryption_class;
+    uc_store_encryption_errors($crypt, 'uc_mes');
+  }
+}
+
+// Main handler for processing credit card transactions.
+function uc_mes_charge($order_id, $amount, $data) {
+  // Load the order.
+  $order = uc_order_load($order_id);
+
+  // Perform the appropriate action based on the transaction type.
+  switch ($data['txn_type']) {
+  
+/*
+    Implement other MES Gateway features here (BML, ACH, etc) if I have time.
+*/
+    // Accommodate all other transaction types.
+    default:
+      return _uc_mes_charge($order, $amount, $data);
+  }
+}
+
+
+
+
+/**
+ * The meat and potatoes. Also known as the charge hook.
+ */
+function _uc_mes_charge($order, $amount, $data) {
+  global $user;
+
+  // Build the POST data for the transaction.  
+  $submit_data = array();
+  
+  //Merchant data
+  $submit_data['profile_id']					= variable_get('uc_mes_api_profile_id', '');
+  $submit_data['profile_key']					= variable_get('uc_mes_api_profile_key', '');
+  $submit_data['transaction_type'] 				= _uc_mes_txn_map($data['txn_type']);
+  $submit_data['invoice_number']				= $order->order_id;
+
+  //For settle pre auths. They only need tran id.
+  if ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE)
+  {
+    $submit_data['transaction_id'] 				= $data['auth_id'];
+	$submit_data['transaction_amount'] 			= $amount;
+  }
+  else
+  {
+    //Tran data
+	$mm = str_pad($order->payment_details['cc_exp_month'], 2, "0", STR_PAD_LEFT);
+	$yy = substr($order->payment_details['cc_exp_year'], -2);
+	
+    $submit_data['transaction_amount'] 			= $amount;
+    $submit_data['card_number'] 				= $order->payment_details['cc_number'];
+    $submit_data['card_exp_date'] 				= $mm . $yy;
+    $submit_data['cvv2'] 						= $order->payment_details['cc_cvv'];
+    $submit_data['cardholder_street_address'] 	= substr($order->billing_street1, 0, 60);
+    $submit_data['cardholder_zip'] 				= substr($order->billing_postal_code, 0, 20);
+    //$submit_data['currency_code'] = !$billing_country ? '' : $billing_country[0]['country_iso_code_2'];
+  }
+  
+  // Cert or live?
+  if (variable_get('uc_mes_txn_mode', 'live') == 'cert')
+    $post_url = 'https://cert.merchante-solutions.com/mes-api/tridentApi';
+  else
+    $post_url = 'https://api.merchante-solutions.com/mes-api/tridentApi';
+
+  // Put into an array for POSTing instead of a GET.
+  $post_fields = array();
+  foreach ($submit_data as $key => $value) {
+    $post_fields[] = $key .'='. urlencode($value);
+  }
+
+  // Setup the cURL request.
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $post_url);
+  curl_setopt($ch, CURLOPT_VERBOSE, 0);
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, implode('&', $post_fields));
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+  curl_setopt($ch, CURLOPT_NOPROGRESS, 1);
+  curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 0);
+  $result = curl_exec($ch);
+
+  // Log any errors to the watchdog.
+  if ($error = curl_error($ch)) {
+    watchdog('uc_mes', 'cURL error: @error', array('@error' => $error), WATCHDOG_ERROR);
+    return array('success' => FALSE);
+  }
+  curl_close($ch);
+
+  $response = explode('&', $result);
+
+  //Parse response neatly into an array, so we can access the keys easily.
+  $responseArray = array();
+  foreach($response as $field) 
+  { 
+    $nameValue = explode("=",$field); 
+    $responseArray[$nameValue[0]] = $nameValue[1]; 
+  }
+
+  if (variable_get('uc_mes_response_debug', FALSE)) {
+    watchdog('uc_mes', 'Debug response: !data', array('!data' => '<pre>'. check_plain(print_r($responseArray, TRUE)) .'</pre>'));
+  }
+
+  // No approval
+  if ($responseArray['error_code'] != '000')
+  {
+    if($responseArray['error_code'] == "201")
+	  $responseArray['auth_response_text'] = $responseArray['auth_response_text'] . " (This auth may have already settled)";
+	
+    $result = array(
+      'success' => FALSE,
+      'message' => t('Credit card payment declined: @message', array('@message' => $responseArray['auth_response_text'])),
+      'uid' => $user->uid,
+    );
+  }
+  else {
+    // Approved
+    $message = t('Type: @type<br />ID: @id', array('@type' => _uc_mes_txn_type($data['txn_type']), '@id' => $responseArray['transaction_id']));
+    $result = array(
+      'success' => TRUE,
+      'comment' => $message,
+      'message' => $message,
+      'data' => array('module' => 'uc_mes', 'txn_type' => $data['txn_type'], 'txn_id' => $responseArray['transaction_id']),
+      'uid' => $user->uid,
+    );
+
+    // If this was an authorization only transaction...
+    if ($data['txn_type'] == UC_CREDIT_AUTH_ONLY) {
+      // Log the authorization to the order.
+      uc_credit_log_authorization($order->order_id, $responseArray['transaction_id'], $amount);
+    }
+    elseif ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
+      uc_credit_log_prior_auth_capture($order->order_id, $data['auth_code']);
+    }
+  }
+
+  // Don't log a pre auth as a payment wasn't actually captured.
+  if (in_array($data['txn_type'], array(UC_CREDIT_AUTH_ONLY))) {
+    $result['log_payment'] = FALSE;
+  }
+
+  // Build an admin order comment.
+  $context = array(
+    'revision' => 'formatted-original',
+    'type' => 'amount',
+  );
+  $comment = t('<b>@type</b><br />
+                <b>@status:</b> @message<br />
+				Amount: @amount<br />
+				AVS response: @avs<br />
+				Approval Code: @approval<br />
+				Transaction ID: @tranid',
+    array('@type' => _uc_mes_txn_type( _uc_mes_txn_map($data['txn_type']) ),
+		  '@status' => $result['success'] ? t('ACCEPTED') : t('REJECTED'), 
+		  '@message' => $responseArray['auth_response_text'], 
+		  '@amount' => uc_price($amount, $context), 
+		  '@tranid' => $responseArray['transaction_id'], 
+		  '@avs' => _uc_mes_avs($responseArray['avs_result']),
+		  '@approval' => $responseArray['auth_code'],
+		  '@tranid' => $responseArray['transaction_id']
+		  ));
+
+  // Add the CVV response if enabled.
+  if (variable_get('uc_credit_cvv_enabled', TRUE)) {
+    $comment .= '<br />'. t('CVV match: @cvv', array('@cvv' => _uc_mes_cvv($responseArray['cvv2_result'])));
+  }
+
+  // Save the comment to the order.
+  uc_order_comment_save($order->order_id, $user->uid, $comment, 'admin');
+
+  return $result;
+}
+
+
+// Returns the message text for an AVS response code.
+function _uc_mes_avs($code) {
+  $text = $code .' - ';
+
+  switch ($code) {
+    case 'A':
+      $text .= t('Address (Street) matches, ZIP does not');
+      break;
+    case 'B':
+      $text .= t('Address information not provided for AVS check');
+      break;
+    case 'E':
+      $text .= t('AVS error');
+      break;
+    case 'G':
+      $text .= t('Non-U.S. Card Issuing Bank');
+      break;
+    case 'N':
+      $text .= t('No Match on Address (Street) or ZIP');
+      break;
+    case 'P':
+      $text .= t('AVS not applicable for this transaction');
+      break;
+    case 'R':
+      $text .= t('Retry – System unavailable or timed out');
+      break;
+    case 'S':
+      $text .= t('Service not supported by issuer');
+      break;
+    case 'U':
+      $text .= t('Address information is unavailable');
+      break;
+    case 'W':
+      $text .= t('Nine digit ZIP matches, Address (Street) does not');
+      break;
+    case 'X':
+      $text .= t('Address (Street) and nine digit ZIP match');
+      break;
+    case 'Y':
+      $text .= t('Address (Street) and five digit ZIP match');
+      break;
+    case 'Z':
+      $text .= t('Five digit ZIP matches, Address (Street) does not');
+      break;
+  }
+
+  return $text;
+}
+
+// Returns the message text for a CVV match.
+function _uc_mes_cvv($code) {
+  $text = $code .' - ';
+
+  switch ($code) {
+    case 'M':
+      $text .= t('Match');
+      break;
+    case 'N':
+      $text .= t('No Match');
+      break;
+    case 'P':
+      $text .= t('Not Processed');
+      break;
+    case 'S':
+      $text .= t('Should have been present');
+      break;
+    case 'U':
+      $text .= t('Issuer unable to process request');
+      break;
+  }
+
+  return $text;
+}
+
+// Returns the title of the transaction type.
+function _uc_mes_txn_type($type) {
+  switch (strtoupper($type)) {
+    case 'D':
+      return t('Authorize and Capture');
+    case 'P':
+      return t('Authorization only');
+    case 'S':
+      return t('Authorization capture');
+    case 'C':
+      return t('Credit');
+    case 'V':
+      return t('Void');
+    case 'U':
+      return t('Refund');
+  }
+}
+
+// Returns the MeS transaction type corresponding to a UC type.
+function _uc_mes_txn_map($type) {
+  switch ($type) {
+    case UC_CREDIT_AUTH_ONLY:
+      return 'P'; 						//Pre auth
+    case UC_CREDIT_PRIOR_AUTH_CAPTURE:
+      return 'S';						//Settle pre auth
+    case UC_CREDIT_AUTH_CAPTURE:
+      return 'D';						//Direct sale (auth & cap)
+    case UC_CREDIT_CREDIT:
+      return 'C';						//Credit
+    case UC_CREDIT_VOID:
+      return 'V';						//Void
+  }
+}

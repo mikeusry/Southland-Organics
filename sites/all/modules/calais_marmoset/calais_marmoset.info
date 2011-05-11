@@ -1,0 +1,12 @@
+; $Id $
+name = Calais Marmoset
+description = "Drupal module to integrate site with the Calais Marmoset metadata tool."
+core = 6.x
+package = "Calais"
+
+; Information added by drupal.org packaging script on 2009-01-16
+version = "6.x-1.0"
+core = "6.x"
+project = "calais_marmoset"
+datestamp = "1232148905"
+

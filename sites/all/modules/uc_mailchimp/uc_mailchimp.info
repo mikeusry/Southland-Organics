@@ -1,0 +1,12 @@
+; $Id: $
+name = MailChimp E-Commerce 360
+package = Ubercart - extra
+description = Provides integration with MailChipms E-Commerce 360 Plugin and Some other features. You must have either the Mailchimp Module or the Email Marketing Framework(w/ Mailchimp Support) module installed. <strong><em>This module will not work</em></strong> without one of these two modules installed.
+dependencies[] = uc_cart
+core = 6.x
+; Information added by drupal.org packaging script on 2009-12-17
+version = "6.x-3.0"
+core = "6.x"
+project = "uc_mailchimp"
+datestamp = "1261068393"
+

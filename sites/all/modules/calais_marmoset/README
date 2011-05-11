@@ -1,0 +1,36 @@
+INSTALLATION
+==================
+Enable the 'administer calais marmoset' permission for roles at 
+'admin/user/permissions'
+
+Then add your settings at 'admin/settings/calais_marmoset'.  You might need to 
+obtain an API key from http://opencalais.com/APIKey
+
+SETUP PAGE.TPL.PHP
+==================
+On your page.tpl.php file, add
+
+<?php
+  if(module_exists('calais_marmoset'))
+    require_once (CALAISMF_INCLUDE_DIR . "header.php");
+?>
+
+before the doctype declaration.
+
+And after the closing html tag add
+
+
+<?php
+  if(module_exists('calais_marmoset'))
+    require_once (constant("CALAISMF_INCLUDE_DIR") . "footer.php"); 
+?>
+
+NOTES
+==================
+To see the crawler output, take any URL on your site and add 
+'?overrideUserAgent=true' to the end of it.  You will then see the a series of tags that
+are injected onto the page.  The base URL for these tags is set by "Tag Base URL" 
+setting.
+
+For the Marmoset view to be useful, you should install the opencalais module so your
+content is tagged with taxonomy terms.

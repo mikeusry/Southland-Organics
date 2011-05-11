@@ -1,0 +1,30 @@
+table.seo-friend-admin td {
+  padding:4px 6px !important;
+}
+table.seo-friend-admin td.row-status {
+  padding:6px 0 6px 30px !important;
+  background-repeat:no-repeat;
+  background-position:5px 50%;
+}
+table.seo-friend-admin tr.error td.row-status {
+  background-image:url(/misc/watchdog-error.png);
+}
+table.seo-friend-admin tr.warning td.row-status {
+  background-image: url(/misc/watchdog-warning.png);
+}
+table.seo-friend-admin tr.ok td.row-status {
+  background-image:url(/misc/watchdog-ok.png);
+}
+table.seo-friend-admin tr.ok {
+  background-color:#DDFFDD;
+  border-color:#BBEEBB;
+}
+table.seo-friend-admin tr.error {
+  background-color:#FFCCCC;
+  border-color:#EEBBBB;
+  color:#220000;
+}
+table.seo-friend-admin tr.warning {
+  background-color:#FFFFDD;
+  border-color:#EEEEBB;
+}

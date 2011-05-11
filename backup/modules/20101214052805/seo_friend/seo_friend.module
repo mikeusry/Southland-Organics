@@ -1,0 +1,1023 @@
+<?php
+
+define('SEO_FRIEND_SETTINGS_PERM', 'administer seo friend settings');
+define('SEO_OVERRIDE', 'seo_override');
+define('SEO_REQUIRED', 'seo_required');
+define('SEO_MIN_CHARS', 'seo_min_chars');
+define('SEO_MAX_CHARS', 'seo_max_chars');
+define('SEO_MIN_WORDS', 'seo_min_words');
+define('SEO_MAX_WORDS', 'seo_max_words');
+define('SEO_DUPLICATES', 'seo_duplicates');
+define('SEO_NOFOLLOW', 'seo_nofollow');
+define('SEO_BLANK_TARGET', 'seo_blank_target');
+define('SEO_REFERRER_MAX', 'seo_referrer_max');
+define('SEO_PATHAUTO_TRACK_STATES', 'seo_pathauto_track_states');
+define('SEO_PATHAUTO_STATES', 'seo_pathauto_states');
+define('SEO_FIELDSETS_COLLAPSED', 'seo_fieldsets_collapsed');
+define('SEO_FIELDSETS_COLLAPSED_TEXT', 'seo_fieldsets_collapsed_text');
+define('SEO_PAGER_NUM', 'seo_pager_num');
+
+/**
+ * @file
+ * This module provides functionality to help you with your site's SEO 
+ * (search engine optimization) friendliness.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function seo_friend_help($path, $arg) {
+  $output = '';
+  if ($path == 'admin/help#seo_friend') {
+    $output = '<p>'. t("Help your site's SEO friendliness.") .'</p>';
+  }
+  return $output;
+} // function seo_friend_help
+
+/**
+ * Implementation of hook_perm().
+ */
+function seo_friend_perm() {
+  return array(SEO_FRIEND_SETTINGS_PERM);
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function seo_friend_menu() {
+  $items = array();
+  // default report - same as main
+  $items['admin/reports/seo'] = array(
+    'title' => 'SEO Reports',
+    'description' => 'SEO Reports.',
+    'page callback' => 'seo_friend_reports',
+    'access callback' => 'seo_friend_access',
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'seo_friend.admin.inc',
+  );
+  $report_list = module_invoke_all('seo_reports');
+  foreach ($report_list as $report => $report_data) {
+    if ($report) {
+      $title = $report_data['title'] ? $report_data['title'] : $report.' Report'; 
+      $items['admin/reports/seo/'.$report] = array(
+          'title' => $title,
+          'description' => $title,
+          'page callback' => 'seo_friend_reports',
+          'access callback' => 'seo_friend_access',
+          'type' => ($report == 'main') ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+          'file' => 'seo_friend.admin.inc',
+          );
+    }
+  }
+
+  $items['admin/content/seo_friend'] = array(
+    'title' => 'SEO Friend',
+    'description' => 'SEO Friend Settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('seo_friend_admin_settings_form'),
+    'access callback' => 'seo_friend_access',
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'seo_friend.admin.inc',
+  );
+  // default settings - same form as previous item
+  $items['admin/content/seo_friend/default'] = array(
+    'title' => 'Default',
+    'description' => 'SEO Friend Default Settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('seo_friend_admin_settings_form'),
+    'access callback' => 'seo_friend_access',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'seo_friend.admin.inc',
+    'weight' => -10,
+  );
+  // settings for for each content type in the system
+  $names = node_get_types('names');
+  if (! empty($names)) {
+    foreach ($names as $type => $name) {
+      if ($type) {
+        $key = 'admin/content/seo_friend/'.$type;
+        $items[$key] = array(
+            'title' => $name,
+            'description' => t('@name SEO Friend Settings.', array('@name'=>$name)),
+            'page callback' => 'drupal_get_form',
+            'page arguments' => array('seo_friend_admin_settings_form'),
+            'access callback' => 'seo_friend_access',
+            'type' => MENU_LOCAL_TASK,
+            'file' => 'seo_friend.admin.inc',
+            );
+      }
+    }
+  }
+  $items['node/%node/seo'] = array(
+    'title' => 'SEO Info',
+    'description' => 'SEO Information.',
+    'page callback' => 'seo_friend_get_seo_info_content',
+    'access callback' => 'seo_friend_access',
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+} // function seo_friend_menu
+
+/**
+ * Implementation of hook_seo_reports().
+ */
+function seo_friend_seo_reports() {
+  return array(
+      'main' => array(
+        'title' => 'Main Report',
+        'callback' => 'seo_friend_main_report',
+        ),
+      'page_title' => array(
+        'title' => 'Page Title Report',
+        'callback' => 'seo_friend_page_title_report',
+        ),
+      'nodewords' => array(
+        'title' => 'Meta Tags (node) Report',
+        'callback' => 'seo_friend_nodewords_report',
+        ),
+      'nodewords_bypath' => array(
+        'title' => 'Meta Tags (path) Report',
+        'callback' => 'seo_friend_nodewords_bypath_report',
+        ),
+      'referrers' => array(
+        'title' => 'Referrers Report',
+        'callback' => 'seo_friend_referrers_report',
+        ),
+      'pathauto' => array(
+        'title' => 'Pathauto Report',
+        'callback' => 'seo_friend_pathauto_report',
+        ),
+      );
+}
+
+/**
+ * Implementation of hook_seo_modules().
+ */
+function seo_friend_seo_modules() {
+  return array(
+      'path' => array(
+        'title'=>'Path', 
+        'description'=>'Allows users to rename URLs', 
+        'project'=>'core', 
+        ),
+      'page_title' => array(
+        'title'=>'Page Title', 
+        'description'=>'Enhanced control over the page title (in the <head> tag)', 
+        ),
+      'nodewords' => array(
+        'title'=>'Meta Tags', 
+        'description'=>'Allows users to add meta tags, eg keywords or description', 
+        ),
+      'nodewords_bypath' => array(
+        'title'=>'Meta Tags by Path', 
+        'description'=>'Allows custom meta tags based on path rules', 
+        ),
+      'nodewords_nodetype' => array(
+        'title'=>'Meta Tags Node Type', 
+        'description'=>'Allows custom meta tags based on node type', 
+        ),
+      'pathauto' => array(
+        'title'=>'Pathauto', 
+        'description'=>'Provides a mechanism for modules to automatically
+        generate aliases for the content they manage', 
+        ),
+      'globalredirect' => array(
+        'title'=>'Global Redirect', 
+        'description'=>'Searches for an alias of the current URL and 301
+        redirects if found', 
+        'uninstalled_error'=>'It is highly recommended that you install the
+        globalredirect module to ensure content does not have duplicate paths',
+        ),
+      'path_redirect' => array(
+        'title'=>'Path Redirect', 
+        'description'=>'Redirect users from one URL to another', 
+        'uninstalled_error'=> (module_exists('pathauto') ? 'Since you are using'
+        : 'If you are going to use').' the pathauto module, it is
+        highly recommended that you install the path_redirect module to ensure 
+        content does not have duplicate paths',
+        ),
+      'menu_attributes' => array(
+        'title'=>'Menu Attributes', 
+        'description'=>'Allows administrators to specify custom attributes for
+        menu items', 
+        ),
+      'seo_checker' => array(
+        'title'=>'SEO Checker', 
+        'description'=>'Checks the SEO compliance of a node at its creation/modification',
+        ),
+      'seochecklist' => array(
+        'title'=>'SEO Checklist', 
+        'description'=>'A Search Engine Optimization checklist', 
+        'project'=>'seo_checklist', // different than module name
+        ),
+      'search404' => array(
+        'title'=>'Search 404', 
+        'description'=>'If 404 error, perform search site based on url', 
+        ),
+      'linkchecker' => array(
+        'title'=>'Link Checker', 
+        'description'=>'Periodically checks for broken links in node types,
+        blocks and cck fields and reports the results', 
+        ),
+      'xmlsitemap' => array(
+        'title'=>'XML Sitemap', 
+        'description'=>'Create a XML sitemap conforming to sitemaps.org
+        specifications', 
+        ),
+      'token' => array(
+        'title'=>'Token', 
+        'description'=>'Provides a shared API for replacement of textual
+        placeholders with actual data',
+        ),
+      'googleanalytics' => array(
+        'title'=>'Google Analytics', 
+        'description'=>'Adds Google Analytics javascript tracking code to all
+        your site\'s pages',
+        'project'=>'google_analytics', // different than module name
+        ),
+      'htmlpurifier' => array(
+        'title'=>'HTML Purifier', 
+        'description'=>'Filter that removes malicious HTML and ensures standards
+        compliant output',
+        ),
+      'relatedcontent' => array(
+        'title'=>'Related Content', 
+        'description'=>'Enables site maintainers to easily select on a per-node
+        basis what nodes should be displayed along with it',
+        ),
+      'morelikethis' => array(
+        'title'=>'More Like This', 
+        'description'=>'Provides a pluggable framework for providing related
+        content',
+        ),
+      'imagefield_tokens' => array(
+        'title'=>'ImageField Tokens', 
+        'description'=>'Allows use of node tokens in ImageField alt and title 
+        text ',
+        ),
+      'featured_content' => array(
+        'title'=>'Featured Content', 
+        'description'=>'Easily create related/featured content blocks based on 
+        content type, author, terms, and path without using views',
+        ),
+      );
+}
+
+/**
+ * Implementation of hook_block(). It's not likely you will want this block
+ * visible to anonymous users, so the default is for authenticated users. If you
+ * want further restrictions, you can restrict based on other roles (if you have
+ * them), or if you want only administrators to have visibility, you can use 
+ * php visibility restriction with something like:
+ *
+ * <?php
+ * return user_access('administer blocks');
+ * ?>
+ * 
+ */
+function seo_friend_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks = array();
+      $blocks[0] = array(
+          'info' => t('SEO Info'),
+          );
+      return $blocks;
+
+    case 'view':
+      $block = array();
+      switch ($delta) {
+        case 0:
+          $block['subject'] = t('SEO Info');
+          $block['content'] = seo_friend_get_seo_info_content(true);
+          break;
+      }
+      return $block;
+  }
+} // function seo_friend_block
+
+/**
+ * Get user friendly node status.
+ */
+function seo_friend_get_node_status($node) {
+  return $node->status ? t('published') : t('not published');
+}
+
+/**
+ * Display SEO information about the current node if available.
+ */
+function seo_friend_get_seo_info_content() {
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    // show node SEO info
+    $node = node_load(arg(1));
+    if ($node->nid) {
+      $spaces = '&nbsp;&nbsp;';
+      $rows[] = array(t('nid'), $node->nid);
+      $rows[] = array(t('status'), seo_friend_get_node_status($node));
+      $rows[] = array(t('type'), $node->type);
+      $rows[] = array(t('path'), $node->path);
+      // pathauto node settings
+      if (module_exists('pathauto')) {
+        $default_pattern = variable_get('pathauto_node_pattern', '');
+        $type_pattern = variable_get('pathauto_node_'.$node->type.'_pattern', $default_pattern);
+        $rows[] = array(t('pathauto'), $type_pattern);
+      }
+
+      $rows[] = array(t('title'), check_plain($node->title));
+      $rows[] = array(t('page title'), '');
+      if (module_exists('page_title')) {
+        $default_pattern = variable_get('page_title_default', '');
+        $type_pattern = variable_get('page_title_type_'.$node->type, $default_pattern);
+        $rows[] = array($spaces.t('value'), check_plain(trim($node->page_title)));
+        $rows[] = array($spaces.t('pattern'), $type_pattern);
+      }
+      else {
+        $rows[] = array($spaces.t('page_title is not installed'));
+      }
+      $rows[] = array(t('meta tags'), '');
+      if (module_exists('nodewords')) {
+        foreach ($node->nodewords as $meta_tag => $meta_value) {
+          if (is_array($meta_value)) {
+            $meta_value = $meta_value['value'];
+          }
+          if (is_array($meta_value)) {
+            foreach ($meta_value as $meta1 => $meta2) {
+              $tmp[] = $meta1.'='.$meta2;
+            }
+            $meta_value = implode(', ', $tmp);
+          }
+          $rows[] = array($spaces.$meta_tag, check_plain($meta_value));
+        }
+      }
+      else {
+        $rows[] = array(t('nodewords is not installed'));
+      }
+      drupal_add_css(drupal_get_path('module', 'seo_friend') .'/seo_friend.css', 'module', 'all', FALSE);
+      $seo_class = (arg(2) == 'seo') ? 'seo-friend-info' : 'seo-friend-block';
+      $attributes = array('class' => $seo_class);
+      return theme('table', array(), $rows, $attributes);
+    }
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function seo_friend_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  // needed in case node_save is called directly rather than going through form
+  if ($op == 'presave') {
+    if (variable_get(SEO_PATHAUTO_TRACK_STATES, TRUE)) {
+      // use the tracked state for the node
+      $states = variable_get(SEO_PATHAUTO_STATES, array());
+      $nid = $node->nid;
+      if (is_numeric($nid) && isset($states[$nid])) {
+        $node->pathauto_perform_alias = $states[$nid];
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_form_alter()
+ */
+function seo_friend_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'block_admin_configure' && arg(4) == 'seo_friend' && arg(5) == 0) {
+    $configured = variable_get('seo_friend_configured_block', false);
+    if (! $configured) {
+      $form['role_vis_settings']['roles']['#default_value'] = array(DRUPAL_AUTHENTICATED_RID);
+      variable_set('seo_friend_configured_block', true);
+    }
+  }
+  // only add to node forms or nodewords_bypath_form
+  if (isset($form['#node']) && $form['#node']->type .'_node_form' == $form_id ||
+      $form_id == 'nodewords_bypath_form') {
+    if (variable_get(SEO_PATHAUTO_TRACK_STATES, TRUE)) {
+      // use the tracked state for the node
+      $states = variable_get(SEO_PATHAUTO_STATES, array());
+      $nid = $form['#node']->nid;
+      if (is_numeric($nid) && isset($states[$nid])) {
+        $form['path']['pathauto_perform_alias']['#default_value'] = $states[$nid];
+      }
+    }
+    $form['#validate'][] = 'seo_friend_form_validate';
+    $form['#submit'][] = 'seo_friend_form_submit';
+  }
+} // function seo_friend_form_alter
+
+/**
+ * Validate the form based on the seo_friend settings.
+ */
+function seo_friend_form_validate($form, &$form_state) {
+  // only validate if saving the form, not in preview or delete
+  if ($form_state['op'] == 'Save') {
+    $node = $form['#node'];
+    if ($node) {
+      seo_friend_text_validate($form, $form_state, $node->type, 'nodewords');
+      seo_friend_text_validate($form, $form_state, $node->type, 'page_title');
+    }
+    else {
+      seo_friend_text_validate($form, $form_state, $node->type, 'nodewords_bypath');
+    }
+  }
+} // function seo_friend_form_validate
+
+/**
+ * Save the seo_friend form data in the variable table.
+ */
+function seo_friend_form_submit($form, &$form_state) {
+  if (variable_get(SEO_PATHAUTO_TRACK_STATES, TRUE)) {
+    if (isset($form_state['values']['pathauto_perform_alias'])) {
+      $nid = $form['#node']->nid;
+      if (is_numeric($nid)) {
+        $states = variable_get(SEO_PATHAUTO_STATES, array());
+        $states[$nid] = $form_state['values']['pathauto_perform_alias'];
+        variable_set(SEO_PATHAUTO_STATES, $states);
+      }
+    }
+  }
+} // function seo_friend_form_submit
+
+/**
+ * Get type to use based on current override setting for module and type. For
+ * example, if the nodewords settings has been overridden for the "page" type
+ * than the "page" type will be returned. But, if they haven't been overridden
+ * for the "blog" type, then "default" will be returned.
+ *
+ * @param $module The module for the data: nodewords, nodewords_bypath, page_title
+ * @param $type The node type associated with the data, e.g. default, page, story.
+ */
+function seo_friend_get_override_type($module, $type) {
+  $override_key = seo_friend_get_key(SEO_OVERRIDE, $module, $type);
+  if (! variable_get($override_key, FALSE)) {
+    $type = 'default';
+  }
+  return $type;
+}
+
+/**
+ * Validate the text associated with the page based on the chosen validation
+ * settings.
+ *
+ * @param $form The edit form.
+ * @param $form_state The edit form state.
+ * @param $type The node type associated with the data, e.g. default, page, story.
+ * @param $module The module for the data: nodewords, nodewords_bypath, page_title
+ */
+function seo_friend_text_validate($form, &$form_state, $type, $module) {
+  $type = seo_friend_get_override_type($module, $type);
+  $tags = seo_friend_get_tags($module);
+  if (! empty($tags)) {
+    foreach ($tags as $tag) {
+      if ($module == 'nodewords') {
+        $tag_value = trim($form_state['values']['nodewords'][$tag]);
+        $fieldset = 'nodewords';
+      }
+      else {
+        $tag_value = trim($form_state['values'][$tag]);
+        $fieldset = null;
+      }
+      // check required
+      $key = seo_friend_get_key(SEO_REQUIRED, $module, $tag, $type);
+      if (variable_get($key, FALSE) && ! strlen($tag_value)) {
+        seo_friend_set_error($tag, t('is empty'), $fieldset); 
+      }
+
+      // check minimum characters
+      $key = seo_friend_get_key(SEO_MIN_CHARS, $module, $tag, $type);
+      $min = variable_get($key, '');
+      if ($min && strlen($tag_value) < $min) {
+        seo_friend_set_error($tag, t('is too short (min=%min characters)', array('%min'=>$min)), $fieldset);
+      }
+
+      // check maximum characters
+      $key = seo_friend_get_key(SEO_MAX_CHARS, $module, $tag, $type);
+      $max = variable_get($key, '');
+      if ($max && strlen($tag_value) > $max) {
+        seo_friend_set_error($tag, t('is too long (max=%max characters)', array('%max'=>$max)), $fieldset);
+      }
+
+      if (preg_match('/keywords/', $tag, $matches) &&
+          preg_match('/,/', $tag_value, $matches)) {
+        $num_words = count(explode(',', $tag_value));
+      }
+      else {
+        $num_words = count(explode(' ', $tag_value));
+      }
+      // check minimum words
+      $key = seo_friend_get_key(SEO_MIN_WORDS, $module, $tag, $type);
+      $min = variable_get($key, '');
+      if ($min && $num_words < $min) {
+        seo_friend_set_error($tag, t('has too few words (min=%min words)', array('%min'=>$min)), $fieldset);
+      }
+
+      // check maximum words
+      $key = seo_friend_get_key(SEO_MAX_WORDS, $module, $tag, $type);
+      $max= variable_get($key, '');
+      if ($max && $num_words > $max) {
+        seo_friend_set_error($tag, t('has too many words (max=%max words)', array('%max'=>$max)), $fieldset);
+      }
+
+      // check for duplicates
+      $key = seo_friend_get_key(SEO_DUPLICATES, $module, $tag, $type);
+      $check = variable_get($key, seo_friend_get_duplicate_select_default($tag));
+      if (in_array($check, array('error', 'warning'))) {
+        $duplicates = seo_friend_check_duplicates($module, $tag, $tag_value, $form['#node']);
+        if ($duplicates) {
+          if ($check == 'error') {
+            seo_friend_set_error($tag, t('has duplicates (!duplicates)', array('!duplicates'=>$duplicates)), $fieldset);
+          }
+          else if ($check == 'warning') {
+            seo_friend_set_warning($tag, t('has duplicates (!duplicates)', array('!duplicates'=>$duplicates))); 
+          }
+        }
+      }
+    }
+  }
+} // function seo_friend_text_validate
+
+/**
+ * Checks for duplicates for the given data.
+ *
+ * @param $module The module for the data: nodewords, nodewords_bypath, page_title
+ * @param $tag The tag name, e.g. description
+ * @param $tag_value The value for this tag
+ * @param $node The node if appropriate
+ */
+function seo_friend_check_duplicates($module, $tag, $tag_value, $node = null) {
+  if (module_exists($module)) {
+    $duplicates = array();
+    if ($module == 'nodewords') {
+      $results = db_query("
+          SELECT id 
+          FROM {nodewords} 
+          WHERE name='%s' AND content='%s'", $tag, $tag_value);
+    }
+    else if ($module == 'page_title') {
+      // page_title changed its database table structure from using "nid" to "id"
+      $id_column_name = seo_friend_get_page_title_id_column();
+      if ($id_column_name) {
+        $results = db_query("
+            SELECT %s AS id 
+            FROM {page_title} 
+            WHERE page_title='%s'", $id_column_name, $tag_value);
+      }
+    }
+    else if ($module == 'nodewords_bypath') {
+      $tag = seo_friend_get_tag_name('nodewords_bypath', $tag);
+      $results = db_query("
+          SELECT rule_id AS id 
+          FROM {nodewords_bypath_tags}
+          WHERE meta_tag='%s' AND meta_value='%s'", $tag, $tag_value);
+          $rule_id = arg(2);
+    }
+    if ($results) {
+      while ($row = db_fetch_object($results)) {
+        if ((! $node && $row->id != $rule_id) || ($node && $row->id != $node->nid)) {
+          $duplicates[] = $row->id;
+        }
+      }
+      $duplicates = implode(',', $duplicates);
+      if ($duplicates) {
+        if ($node) {
+          $duplicates = 'node ids=['.$duplicates.']';
+        }
+        else {
+          $duplicates = 'rule ids=['.$duplicates.']';
+        }
+      }
+      return $duplicates;
+    }
+  }
+}
+
+/**
+ * Since page_title has changed its schema, handle old and new versions of
+ * page_title by determining what db column name to use.
+ */
+function seo_friend_get_page_title_id_column() {
+  if (db_column_exists('page_title', 'id')) {
+    return 'id';
+  }
+  else if (db_column_exists('page_title', 'nid')) {
+    return 'nid';
+  }
+  drupal_set_message(t('Unable to determine column name for page_title table'));
+}
+
+/**
+ * Gets the tag name to use based on the size of given tags array. If the tags
+ * array size is one, then the default is used instead of info in the array.
+ * Otherwise, 'meta_tag_' is stripped off in case the tag is for
+ * nodewords_bypath.
+ *
+ * @param $tags_or_module The array of tags to determine the number size, or
+ * module name for retrieving tags.
+ * @param $tag The tag name, e.g. description or meta_tag_description.
+ * @param $default The default name to use if tags has size=1.
+ */
+function seo_friend_get_tag_name($tags_or_module, $tag, $default = null) {
+  if (is_array($tags_or_module)) {
+    $tags = $tags_or_module;
+  }
+  else {
+    $tags = seo_friend_get_tags($tags_or_module);
+  }
+  if (sizeof($tags) > 1) {
+    $tmp = explode('meta_tag_', $tag);
+    if ($tmp[1]) {
+      return $tmp[1];
+    }
+    return $tag;
+  }
+  return $default;
+} // function seo_friend_get_tag_name
+
+
+/**
+ * Gets the options array for the duplicate check select list.
+ */
+function seo_friend_get_duplicate_select_options() {
+  return array(
+      'nocheckreport' => t('Do Not Check or Report'),
+      'nocheck' => t('Do Not Check When Editing Content'),
+      'warning' => t('Show Warning'),
+      'error' => t('Show Error'),
+      );
+} // function seo_friend_get_duplicate_select_options
+
+/**
+ * Get the default for the check duplicates select list. The default for
+ * description, keywords, abstract, and page_title are to warn the user if there
+ * is a duplicate in the system; otherwise the default is to not check for
+ * duplicates. If the user wants different behavior, they choose the desired
+ * setting in the configuration. For the case of nodewords_bypath, the tag names
+ * are prepended by 'meta_tag_' so that is stripped off here to decide the
+ * behavior.
+ *
+ * @param $tag The tag name such as 'description'.
+ */
+function seo_friend_get_duplicate_select_default($tag) {
+  $tmp = explode('meta_tag_', $tag);
+  if ($tmp[1]) {
+    $tag = $tmp[1];
+  }
+  switch ($tag) {
+    case 'description':
+    case 'keywords':
+    case 'abstract':
+    case 'page_title':
+      return 'warning';
+      break;
+    default:
+      return 'nocheckreport';
+  }
+} // function seo_friend_get_duplicate_select_default
+
+/**
+ * Set error for the form.
+ *
+ * @param $tag Form field that corresponds to the tag with error.
+ * @param $problem The problem to report in the error message.
+ * @param $fieldset (optional) Fieldset name if the tag field is within a fieldset.
+ */
+function seo_friend_set_error($tag, $problem, $fieldset = null) {
+  $label = str_replace('_', ' ', $tag);
+  if ($fieldset) {
+    $tag = $fieldset.']['.$tag;
+  }
+  form_set_error($tag, t('The %label field !problem. Update this field, or change your !settings.', array('%label'=>$label, '!problem'=>$problem, '!settings'=>seo_friend_settings_link()))); 
+}
+
+/**
+ * Set warning for the form.
+ *
+ * @param $tag Form field that corresponds to the tag with warning.
+ * @param $problem The problem to report in the warning message.
+ */
+function seo_friend_set_warning($tag, $problem) {
+  $label = str_replace('_', ' ', $tag);
+  drupal_set_message(t('The %label field !problem. You may want to update this field, or change your !settings.', array('%label'=>$label, '!problem'=>$problem, '!settings'=>seo_friend_settings_link()))); 
+}
+
+/**
+ * The SEO Friend admin settings link.
+ */
+function seo_friend_settings_link() {
+  return l('SEO Friend settings', 'admin/content/seo_friend');
+}
+
+/**
+ * Create a key from the arguments passed into this function.
+ */
+function seo_friend_get_key() {
+  $args = func_get_args();
+  if (! empty($args)) {
+    return str_replace('.', '_', implode('_', $args));
+  }
+} // function seo_friend_get_key
+
+/**
+ * Determine access based on custom perm.
+ */
+function seo_friend_access() {
+  return user_access(SEO_FRIEND_SETTINGS_PERM);
+}
+
+/**
+ * Get array of tags used based on given module. Only modules supported are
+ * nodewords, nodewords_bypath, and page_title.
+ */
+function seo_friend_get_tags($module) {
+  if ($module == 'nodewords' || $module == 'nodewords_bypath') {
+    if (function_exists('_nodewords_get_possible_tags')) {
+      // for backwards compatibility
+      $tags = _nodewords_get_possible_tags();
+    }
+    else if (function_exists('nodewords_get_possible_tags')) {
+      $tags = array_keys(nodewords_get_possible_tags());
+    }
+    if ($tags) {
+      $edit_tags = array();
+      if (function_exists('_nodewords_get_settings')) {
+        // for backwards compatibility
+        $nodewords_settings = _nodewords_get_settings();
+      }
+      else {
+        $tmp = array();
+        $edit_tags = variable_get('nodewords_edit', array());
+        if ($edit_tags) {
+          foreach ($edit_tags as $edit_tag) {
+            if (is_string($edit_tag)) {
+              $tmp[] = $edit_tag;
+            }
+          }
+        }
+        $edit_tags = $tmp;
+      }
+      $tmp = array();
+      foreach ($tags as $tag) {
+        if ($nodewords_settings['edit'][$tag] || in_array($tag, $edit_tags)) {
+          if ($module == 'nodewords_bypath') {
+            $tag = 'meta_tag_'.$tag;
+          }
+          $tmp[] = $tag;
+        }
+      }
+      $tags = $tmp;
+    }
+  }
+  else {
+    $tags = array('page_title');
+  }
+  return $tags;
+}
+
+/**
+ * Call this from your theme's xxxx_menu_item_link function if you want to
+ * update your menu links with the nofollow & target settings you have
+ * configured. If you are not using a custom theme, you can create a
+ * phptemplate_menu_item_link function in one of your modules and call this
+ * function from there.
+ *
+ * For control over all your individual menu item attributes, install the 
+ * menu_attributes module.
+ */
+function seo_friend_menu_item_link($link) {
+  if (! is_array($link['localized_options'])) {
+    $link['localized_options'] = array();
+  }
+  if (! is_array($link['localized_options']['attributes'])) {
+    $link['localized_options']['attributes'] = array();
+  }
+  if (seo_friend_page_match(SEO_NOFOLLOW, $link['href'])) {
+    $link['localized_options']['attributes']['rel'] = 'nofollow';
+  }
+  if (seo_friend_page_match(SEO_BLANK_TARGET, $link['href'])) {
+    $link['localized_options']['attributes']['target'] = '_blank';
+  }
+  return l($link['title'], $link['href'], $link['localized_options']);
+} // seo_friend_menu_item_link
+
+/**
+ * Determine if the given path is in the pages associated with the give key.
+ *
+ * @param $key The key associated with the pages in the variable table.
+ * @param $path The path to check.
+ */
+function seo_friend_page_match($key, $path) {
+  $pages = trim(variable_get($key, ''));
+  if ($pages) {
+    $page_match = drupal_match_path($path, $pages);
+  }
+  return $page_match;
+}
+
+/**
+ * This function is based on code from NancyDru.
+ */
+function seo_friend_referrers_report() {
+
+  $result = db_result(db_query("SHOW TABLES LIKE 'accesslog'"));
+  if (! $result || !module_exists('statistics')) {
+    return t('You currently do not have access logging turned on. To turn on, go to your !page page and enable the Statistics module.', array('!page' => l('admin/build/modules', 'admin/build/modules')));
+  }
+
+  $search_strings = $hosts = $referrers = array();
+  $search_engines = module_invoke_all('search_engines');
+  $this_site = $_SERVER['HTTP_HOST'];
+
+  $limit = seo_friend_get_number_variable(SEO_REFERRER_MAX, 10000);
+  $result = db_query("SELECT path, url, hostname, timestamp FROM {accesslog} WHERE url <> '' AND url NOT LIKE ('http%s%%') ORDER BY timestamp DESC LIMIT %d", $this_site, $limit);
+  while ($row = db_fetch_object($result)) {
+    if (! trim($row->url) || trim($row->url) == 'http://') {
+      continue;
+    }
+    $url_parts = parse_url($row->url);
+
+    if (!$url_parts['path']) {
+      $url_parts['path'] = '/';
+    }
+
+    $referrer = $url_parts['host'];
+    if (isset($hosts[$referrer])) {
+      ++$hosts[$referrer];
+    }
+    else {
+      $hosts[$referrer] = 1;
+    }
+
+    $host_parts = explode('.', $url_parts['host']);
+    $search_engine = NULL;
+    foreach ($search_engines as $engine => $data) {
+      if (in_array($engine, $host_parts)) {
+        $search_engine = $engine;
+      }
+    }
+
+    if ($search_engine && isset($url_parts['query'])) {
+      parse_str($url_parts['query'], $query_params);
+
+      if ($search_engines[$search_engine]['image']) {
+        // special handling for google image referrals
+        $image_ref = $search_engines[$search_engine]['image']['ref'];
+        $image_param = $search_engines[$search_engine]['image']['param'];
+        if (isset($query_params[$image_ref])) {
+          $search_strings[$search_engine][] = $query_params[$image_param];
+          $tmp = parse_url($query_params[$image_ref]);
+          $referrers[$referrer][] = $tmp['path'];
+        }
+      } 
+      else {
+        foreach ($search_engines[$search_engine]['params'] as $param) {
+          if (trim($query_params[$param])) {
+            $strings[] = trim($query_params[$param]);
+          }
+        }
+        if (count($strings)) {
+          if ($search_engines[$search_engine]['concat']) {
+            $search_strings[$search_engine][] = implode(' ', $strings);
+          }
+          else {
+            $search_strings[$search_engine][] = $strings[0];
+          }
+        }
+      }
+    }
+    else {
+      $referrers[$referrer][] = $url_parts['path'];
+    }
+  }
+
+  $output = '<h2 class="title">'. t('Referrers') .'</h2>';
+  $output .= '<table cellpadding="2" style="width: 100%; font-size: 80%;"><tr><td valign="top">';
+  arsort($hosts);
+  $output .= '<h3>'. t('Counts by host') .'</h3>';
+  $rows = array();
+  $header = array(t('Site'), t('Hits'));
+  foreach ($hosts as $site => $count) {
+    $rows[] = array(check_plain($site), $count);
+  }
+  $output .= theme('table', $header, $rows, array('width' => '32%'));  
+
+  $output .= '</td><td valign="top">';
+  $output .= '<h3>'. t('Referrers') .'</h3><br />';
+  ksort($referrers);
+  $header = array(t('Page'), t('Hits'));
+  $output .= seo_friend_referrer_counter($referrers, 'From %key', $header, TRUE);
+
+  $output .= '</td><td valign="top">';
+
+  $output .= '<h3>'. t('Search Engine Activity') .'</h3><br />';
+  $header = array(t('Search Keywords'), t('Hits'));
+  if ($search_strings) {
+    $output .= seo_friend_referrer_counter($search_strings, 'Search strings from %key', $header);
+  }
+  else {
+    $output .= '<p>'. t('No search strings found.') .'</p>';
+  }
+
+  $output .= '</td></tr></table>';
+  return $output;
+}
+
+/**
+ * List of search engines and search engine params for showing referral report.
+ */
+function seo_friend_search_engines() {
+  return array(
+      'live' => array(
+        'params' => array(
+          'q',
+          ),
+        ),
+      'google' => array(
+        'params' => array(
+          'query', 
+          'q',
+          'imgurl', // ? (see imgrefurl) ?
+          ),
+        'image' => array(
+          'ref' => 'imgrefurl',
+          'param' => 'imgurl',
+          ),
+        ),
+      'altavista' => array(
+        'params' => array(
+          'aqa', 
+          'aqp', 
+          'aqo',
+          ),
+        'concat' => true,
+        ),
+      'ask' => array(
+        'params' => array(
+          'q',
+          ),
+        ),
+      'dogpile' => array(
+          'params' => array(
+            'q',
+            ),
+          ),
+      'yahoo' => array(
+          'params' => array(
+            'p',
+            ),
+          ),
+      'netscape' => array(
+          'params' => array(
+            'query', 
+            'q',
+            ),
+          ),
+      'aol' => array(
+          'params' => array(
+            'query', 
+            'q',
+            ),
+          ),
+      );
+}
+
+/**
+ * This function is based on code from NancyDru.
+ */
+function seo_friend_referrer_counter($array, $title, $header, $link = FALSE) {
+  $output = NULL;
+  foreach ($array as $key => $values) {
+    foreach ($values as $x => $value) {
+      if (!is_string($value)) {
+        drupal_set_message($key .' => '. $x .' => '. check_plain($value) .': '. gettype($value));
+        continue 2;
+      }
+    }
+    $counts = array_count_values($values);
+    if (!$counts) {
+      $counts[$key] = print_r($values, TRUE);
+    }
+    arsort($counts);
+    $rows = array();
+    foreach ($counts as $what => $count) {
+      $what = chunk_split($what, 28, $link ? "<br />" : "&#8203;"); // shorten text
+      $rows[] = array(
+        array('data' => decode_entities($link ? l($what, 'http://'. $key . $what, array('target' => '_blank'), NULL, NULL, TRUE) : check_plain($what)), 'style' => 'width: 28em'),
+        $count,
+        );
+    }
+    $output .= '<h4>'. t($title, array('%key' => $key)) .' ('. count($rows) .')</h4>';
+    $output .= theme('table', $header, $rows, array('width' => '32%'));
+  }
+  return $output;
+}
+
+/**
+ * Get number from variables. If data is not numeric, return default.
+ */
+function seo_friend_get_number_variable($key, $default) {
+  $data = variable_get($key, $default);
+  if (! is_numeric($data)) {
+    $data = $default;
+  }
+  return $data;
+}
+

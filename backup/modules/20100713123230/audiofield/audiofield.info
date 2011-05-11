@@ -1,0 +1,16 @@
+; $Id: 
+name = audiofield
+description = "This Modul is for uploading and playing audio."
+core = 6.x
+dependencies[] = filefield
+package = CCK
+
+stylesheets[all][] = style.css
+
+
+; Information added by drupal.org packaging script on 2010-01-16
+version = "6.x-1.0-beta3"
+core = "6.x"
+project = "audiofield"
+datestamp = "1263661207"
+

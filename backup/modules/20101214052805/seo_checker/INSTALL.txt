@@ -1,0 +1,17 @@
+Installation of seo_checker 1.0
+-------------------------------
+
+1. Place the seo_checker directory in sites/all/modules.
+
+2. Enable the core module and the submodules you need at /admin/build/modules
+
+2.1 If you enable keyword_rules, a cck field named field_keywords will be 
+		created and assigned to the content types "page" and "story" if they exist.
+
+3. Enable the SEO compliance check for the desired content types 
+	 at their configuration page.
+
+4. The module comes with two submodules that include some basic checks. 
+   Install or write further submodules that implement more such checks.
+
+5. Configure the thresholds and other settings at admin/settings/seo_checker

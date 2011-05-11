@@ -1,0 +1,61 @@
+# $Id: basic_seo_rules.pot,v 1.1.2.1 2009/10/18 14:41:47 miruoss Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  basic_seo_rules.module,v 1.1.2.5 2009/08/13 07:04:10 miruoss
+#  basic_seo_rules.info,v 1.1.2.3 2009/05/25 09:47:28 miruoss
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-10-18 14:54+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: basic_seo_rules.module:15
+msgid "Alt attributes in &lt;img&gt; - tags"
+msgstr ""
+
+#: basic_seo_rules.module:16
+msgid "Checks if all the &lt;img&gt; tags in the body have an alt attribute."
+msgstr ""
+
+#: basic_seo_rules.module:20;29
+msgid "Test passed."
+msgstr ""
+
+#: basic_seo_rules.module:21
+msgid "Test failed, please make sure your images contain an alternative text."
+msgstr ""
+
+#: basic_seo_rules.module:24
+msgid "Title attributes in &lt;a href&gt; - tags"
+msgstr ""
+
+#: basic_seo_rules.module:25
+msgid "Checks if all the &lt;a href&gt; tags have a title attribute."
+msgstr ""
+
+#: basic_seo_rules.module:30
+msgid "Test failed, please make sure your links contain a title attribute."
+msgstr ""
+
+#: basic_seo_rules.info:0
+msgid "Basic SEO Rules"
+msgstr ""
+
+#: basic_seo_rules.info:0
+msgid "Basic rules for the SEO compliance checker module"
+msgstr ""
+
+#: basic_seo_rules.info:0
+msgid "SEO Compliance Checker"
+msgstr ""
+
