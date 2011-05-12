@@ -92,17 +92,9 @@ div#preface-top.preface-top.row.grid16-16 {
   clear: both;
 }
 
-#sidebar-first {
-}
-
 /* @group Header */
 
-/* Header Regions
--------------------------------------------------------------- */
-
 /* @group Header Group */
-
-/* Header Group */
 .header-group-wrapper {
 	background: white url(../images/organic-back.jpg) repeat-x 0 12px;
 }
@@ -114,69 +106,6 @@ div#preface-top.preface-top.row.grid16-16 {
 	background: url(../images/Southland-Design-Sky.png) no-repeat;
 }
 
-div#header-group-inner.header-group-inner {
-	background-color: 
-}
-
-.header-group-wrapper a:link,
-.header-group-wrapper a:visited {
-  color: #fff;
-	background-color: transparent;
-}
-
-/* Header Top */
-.header-top-wrapper {
-	background-image: none;
-	background-color: white;
-}
-
-.header-top {
-  overflow: visible;
-  position: relative;
-}
-
-
-
-/* @end */
-
-/* @group Header Top */
-
-/* Header top region */
-.header-top-region {
-  color: white;
-	margin: 0;
-	padding: 0;
-}
-
-.header-top-region a:link,
-.header-top-region a:visited,
-.header-top-region a:hover,
-.header-top-region a:focus {
-  color: #22A6E4;
-	text-decoration: underline;
-}
-
-/* @group Toboggan */
-
-#toboggan-login-link-container {
-}
-
-#toboggan-login div.item-list ul li.first {
-	display: inline;
-	float: left;
-}
-
-#toboggan-login div.item-list ul {
-	width: 175px;
-}
-
-/* @end */
-
-html.js .fusion-horiz-login#block-user-0 #user-login-form label {
-	color: white;
-	margin-top: 16px;
-}
-
 
 
 /* @end */
@@ -185,20 +114,9 @@ html.js .fusion-horiz-login#block-user-0 #user-login-form label {
 
 /* @group Site Info */
 
-/* Site Info
--------------------------------------------------------------- */
-
-#header-site-info span {
-}
-
 #logo {
 	margin-left: 20px;
 	margin-top: 25px;
-}
-
-#site-name a:link,
-#site-name a:visited {
-  color: #d8d8d8;
 }
 
 #slogan {
@@ -207,27 +125,9 @@ html.js .fusion-horiz-login#block-user-0 #user-login-form label {
   font-style: italic;
 }
 
-#site-name-slogan {
-  float: left;
-}
-
 
 
 /* @end */
-
-/* Header Site Info */
-
-.header-site-info {
-  margin: 0;
-  width: auto;
-}
-
-.header-site-info-inner {
-}
-
-#header-site-info-inner {
-	background-color: transparent;
-}
 
 
 
@@ -235,47 +135,7 @@ html.js .fusion-horiz-login#block-user-0 #user-login-form label {
 
 cee
 
-/* @group Header Regions - Secondary menu */
 
-/* Header Regions - Secondary menu
--------------------------------------------------------------- */
-
-.secondary-menu {
-  margin-bottom: 0;
-  width: auto;
-}
-
-.secondary-menu-inner ul.links {
-  float: none;
-  margin: 0;
-}
-
-.secondary-menu-inner ul.links li a:link,
-.secondary-menu-inner ul.links li a:visited {
-  border-left: 1px solid #353535;
-  color: #c7c7c7;
-  display: block;
-  float: left;
-  padding: 7px 10px 7px 10px;
-}
-
-.secondary-menu-inner ul.links li.last a {
-  border-right: 1px solid #353535;
-}
-
-.secondary-menu-inner ul.links li a:hover,
-.secondary-menu-inner ul.links li a:focus {
-  background: #737373;
-  text-decoration: none;
-}
-
-.secondary-menu-inner ul.links li a.active {
-  background: #383838;
-}
-
-
-
-/* @end */
 
 /* @group Header Regions - Search */
 
@@ -499,22 +359,6 @@ ul.pager li.pager-current {
 
 /* @end */
 
-/* @group forms */
-
-/* forms */
-.form-submit {
-  font-size: 80%;
-}
-
-legend,
-legend.collapse-processed,
-legend.collapse-processed a:link,
-legend.collapse-processed a:visited {
-  font-family: "Myriad Pro", Myriad, "Trebuchet MS", Arial, Helvetica, sans-serif;
-  font-size: 116.67%;   /* 14px/12px */
-}
-/* @end */
-
 /* @group Prosper Skinr styles */
 
 /* Prosper Skinr styles */
@@ -566,107 +410,12 @@ strong.weak {
 	font-style: normal;
 }
 
-/* HTML Elements
--------------------------------------------------------------- */
-body {
-  padding: 0;
-}
-
-.page {
-}
-
-.page-inner {
-}
-
-img {
-	padding: 7px;
-}
-
-
-
-/* @end */
-
-/* @group Lists */
-
-/* Lists */
-ul li {
-  list-style-image: url(../images/list-level-1.png);
-}
-
-ul li ul li {
-  list-style-image: url(../images/list-level-2.png);
-}
-
-ul li ul li ul li {
-  list-style-image: url(../images/list-level-3.png);
-}
-
-.node .content ul {
-  margin: 0 0 10px 30px;
-}
-
-.node .content ul li {
-  margin: 0 0 5px 0;
-}
-
-
-
-/* @end */
-
-/* @group Blockquotes */
-
-blockquote {
-  background: #ececec url(../images/blockquote-quote.png) no-repeat 8px 8px;
-  border-top: 1px solid #d8d8d8;
-  color: #6a6a6a;
-  font-style: italic;
-  margin: 10px 0;
-  padding: 10px 30px;
-}
-
-/* Blockquotes */
-
 
 
 /* @end */
 /* @group Primary Menu */
 
 /* @group Primary Main */
-
-/* @group Primary menu - nolink */
-.primary-menu-inner ul.menu li .nolink {
-  border-left: 1px solid #5b5b5b;
-  color: #aeaeae;
-  display: block;
-  float: left;
-  padding: 8px 20px 8px 20px;
-}
-
-.primary-menu-inner ul.menu li .nolink {
-  cursor: pointer;
-}
-
-.primary-menu-inner ul.menu li .nolink:hover,
-.primary-menu-inner ul.menu li .nolink.hover {
-  color: #fff;
-}
-
-.primary-menu-inner ul.menu li.active-trail .nolink,
-.primary-menu-inner ul.sf-menu li:hover .nolink,
-.primary-menu-inner ul.sf-menu li.hover .nolink {
-  background: #f4f4f4;
-  color: #8b8b8b;
-}
-
-.primary-menu-inner ul.sf-menu li.expanded:hover .nolink,
-.primary-menu-inner ul.sf-menu li.expanded.hover .nolink {
-  margin-bottom: -5px;
-  padding-bottom: 13px;
-}
-/* @end */
-
-/* Primary Menu
-/-------------------------------------------------------------- */
 
 #header-primary-menu-wrapper {
 	position: relative;
@@ -680,9 +429,6 @@ blockquote {
 	height: 0;
 }
 
-.header-primary-menu {
-}
-
 .primary-menu {
   margin: 0;
   overflow: visible;
@@ -694,10 +440,6 @@ div#primary-menu-inner.primary-menu-inner {
   overflow: visible;
   z-index: 10;
 	margin: 0;
-}
-
-.primary-menu-inner ul.menu {
-  margin: 0;
 }
 
 /* visited pseudo selector so IE6 applies text colour */
@@ -718,11 +460,6 @@ div#primary-menu-inner.primary-menu-inner {
 
 /* @group Superfish */
 
-/* styles for Superfish primary menu */
-.primary-menu-inner ul.sf-menu {
-  float: none;
-}
-
 #primary-menu-inner ul.menu.sf-menu a {
 	color: #282829;
 	border-style: none;
@@ -741,26 +478,6 @@ div#primary-menu-inner.primary-menu-inner {
 .primary-menu-inner ul.menu li.active-trail a.active {
   color: black;
 }
-
-.primary-menu-inner ul.sf-menu li.last {
-  border-right: 1px none #5b5b5b;
-	padding-right: 20px;
-}
-
-.primary-menu-inner ul.sf-menu li.expanded:hover a,
-.primary-menu-inner ul.sf-menu li.expanded.hover a {
-  margin-bottom: -5px;
-  padding-bottom: 13px;
-	background-color: #5A8725;
-}
-
-.primary-menu-inner ul.sf-menu li.expanded:hover ul.menu li a,
-.primary-menu-inner ul.sf-menu li.expanded.hover ul.menu li a {
-  margin-bottom: 0;
-  padding: 5px 10px;
-}
-
-
 
 /* @end */
 
@@ -1602,10 +1319,6 @@ div.poll .percent {
   -webkit-border-radius: 4px;
 }
 
-.prosper-shoppingcart-dark h2.block-title {
-  color: #f5f5f5;
-}
-
 .prosper-shoppingcart-dark .content {
   color: white;
 }
@@ -1902,10 +1615,6 @@ td.cart-block-summary-total {
 	margin: 0;
 }
 
-.footer .fusion-inline-menu h2.block-title {
-  display: none;
-}
-
 .footer .fusion-inline-menu ul {
   margin: 0;
   padding: 0;
@@ -1965,10 +1674,6 @@ td.cart-block-summary-total {
 
 .footer .fusion-multicol-menu {
   margin: -20px 0 0 0;
-}
-
-.footer .fusion-multicol-menu h2.block-title {
-  display: none;
 }
 
 .footer .fusion-multicol-menu ul li {
@@ -2276,9 +1981,8 @@ ul.uc-categories a:visited {
   background: #f7f7f7;
   border: 1px solid #ededed;
   color: #8e8e8e;
-  margin: 0 0 20px 0;
+  margin: 0 0 10px;
   overflow: hidden;
-  padding: 20px 20px 20px 20px;
   -moz-border-radius: 4px;
   -webkit-border-radius: 4px;
 }
@@ -2726,33 +2430,11 @@ td.cart-block-item-desc {
 div.block-uc_ajax_cart {
 }
 
-#block-uc_ajax_cart-0 div h2.title.block-title {
-	background: url(../images/bag_green.png) no-repeat -12px -5px;
-	height: 64px;
-	text-align: center;
-	font-size: 1.5em;
-	text-indent: 25px;
-}
-
 
 
 /* @end */
 
 #sidebar-first {
-}
-
-#block-block-3 div.inner.clearfix h2.title.block-title {
-	background-color: green;
-	text-align: center;
-	height: 30px;
-	color: black;
-}
-
-#block-block-4 div.inner.clearfix h2.title.block-title {
-	background-color: green;
-	text-align: center;
-	height: 30px;
-	color: black;
 }
 
 

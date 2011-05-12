@@ -90,7 +90,7 @@
  *   $db_url = 'pgsql://username:password@localhost/databasename';
  *   $db_url = 'mysql://musry7_so:dawgs7@localhost/southlandorganics';
  */
-$db_url = 'mysql://musry7_so:dawgs7@localhost/southland';
+$db_url = 'mysql://musry7_so:dawgs7@localhost/southlandorganics';
 $db_prefix = '';
 
 /**

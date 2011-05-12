@@ -147,9 +147,12 @@ function fusion_core_preprocess_page(&$vars) {
   
   // Replace page title as Drupal core does, but strip tags from site slogan.
   // Site name and slogan do not need to be sanitized because the permission
-  // 'administer site configuration' is required to set and should be given to
+  // 'administer site configuration' is required to be set and should be given to
   // trusted users only.
-  if (drupal_get_title()) {
+  // No sanitization will be applied when using the page title module.
+  if (module_exists('page_title')) {
+    $head_title = page_title_page_get_title();
+  } elseif (drupal_get_title()) {
     $head_title = array(strip_tags(drupal_get_title()), variable_get('site_name', 'Drupal'));
   }
   else {
@@ -158,7 +161,8 @@ function fusion_core_preprocess_page(&$vars) {
       $head_title[] = strip_tags(variable_get('site_slogan', ''));
     }
   }
-  $vars['head_title'] = implode(' | ', $head_title);  
+  if (is_array($head_title)) $head_title = implode(' | ', $head_title);  
+  $vars['head_title'] = $head_title;
 }
 
 
