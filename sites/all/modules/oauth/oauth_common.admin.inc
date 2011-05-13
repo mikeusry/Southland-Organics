@@ -1,5 +1,4 @@
 <?php
-// $Id: oauth_common.admin.inc,v 1.1 2010/05/20 16:16:05 hugowetterberg Exp $
 
 function _oauth_common_admin() {
   $form = array();
@@ -36,13 +35,17 @@ function _oauth_common_admin_settings_validate($form, $form_state) {
  */
 function oauth_common_list_context($js = NULL) {
   $header = array(
-    array('data' => t('Title'),          'class' => 'oauth-common-contexts-title'),
-    array('data' => t('Storage'),        'class' => 'oauth-common-contexts-storage'),
-    array('data' => t('Operations'),     'class' => 'oauth-common-contexts-operations'),
+    array('data' => t('Title'),      'class' => 'oauth-common-contexts-title'),
+    array('data' => t('Storage'),    'class' => 'oauth-common-contexts-storage'),
+    array('data' => t('Operations'), 'class' => 'oauth-common-contexts-operations'),
   );
 
   $contexts = oauth_common_context_load_all();
   $rows = array();
+
+  if (!$contexts) {
+    $contexts = array();
+  }
 
   foreach ($contexts as $context) {
     $operations = array();
@@ -88,7 +91,7 @@ function oauth_common_list_context($js = NULL) {
     $rows[$context->name] = array(
       'data' => array(
         'title' => array(
-          'data'  => $context->title,
+          'data'  => check_plain($context->title),
           'class' => 'oauth-common-contexts-title',
         ),
         'storage' => array(
@@ -115,7 +118,16 @@ function oauth_common_list_context($js = NULL) {
 function oauth_common_add_context() {
   $context = oauth_common_context_new();
   drupal_set_title(t('Add context'));
-  return oauth_common_edit_context($context);
+  if (!$context) {
+    drupal_set_message(t("Can't create contexts, check that you've installed !ctools.", array(
+      '!ctools' => l('Chaos tool suite', 'http://drupal.org/project/ctools'),
+    )), 'error');
+    $result = '';
+  }
+  else {
+    $result = oauth_common_edit_context($context);
+  }
+  return $result;
 }
 
 /**
@@ -154,7 +166,7 @@ function oauth_common_edit_form_context(&$form_state, $context) {
   $form['name'] = array(
     '#type'          => 'textfield',
     '#size'          => 24,
-    '#maxlength'     => 255,
+    '#maxlength'     => 32,
     '#default_value' => $context->name,
     '#title'         => t('Context name'),
     '#description'   => t('A unique name used to identify this preset internally. It must be only be alpha characters and underscores. No spaces, numbers or uppercase characters.'),
@@ -164,7 +176,7 @@ function oauth_common_edit_form_context(&$form_state, $context) {
   $form['title'] = array(
     '#type'          => 'textfield',
     '#size'          => 24,
-    '#maxlength'     => 255,
+    '#maxlength'     => 100,
     '#default_value' => $context->title,
     '#title'         => t('Context title'),
     '#required'      => TRUE,
@@ -188,7 +200,7 @@ function oauth_common_edit_form_context(&$form_state, $context) {
       '#title' => t('Supported signature methods'),
       '#options' => $sign_methods,
       '#default_value' => !empty($context->authorization_options['signature_methods']) ?
-         $context->authorization_options['signature_methods']:
+         $context->authorization_options['signature_methods'] :
          array('HMAC-SHA1', 'HMAC-SHA256', 'HMAC-SHA384', 'HMAC-SHA512'),
     )
   );
@@ -331,7 +343,7 @@ function oauth_common_edit_form_auth_level($context, $idx, $title, $name = '', $
       '#title' => t('Name'),
       '#description' => t('The name of the authorization level.'),
       '#size' => 40,
-      '#maxlength' => 255,
+      '#maxlength' => 32,
       '#default_value' => $name,
       '#oauth_common_panel' => 'left',
     ),
@@ -340,7 +352,7 @@ function oauth_common_edit_form_auth_level($context, $idx, $title, $name = '', $
       '#title' => t('Title'),
       '#description' => t('The title of the authorization level.'),
       '#size' => 40,
-      '#maxlength' => 255,
+      '#maxlength' => 100,
       '#default_value' => $level['title'],
       '#oauth_common_panel' => 'left',
     ),
@@ -437,7 +449,6 @@ function oauth_common_edit_form_context_validate(&$form, &$form_state) {
       else if (preg_match("/[^A-Za-z0-9_\*]/", $level['name'])) {
         form_error($form["l_{$idx}_name"], t('Authorization level name must be alphanumeric or underscores only.'));
       }
-
       if (empty($level['title'])) {
         form_error($form["l_{$idx}_title"], t('Authorization levels must have a title.'));
       }

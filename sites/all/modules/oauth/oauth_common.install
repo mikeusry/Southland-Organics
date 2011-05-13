@@ -1,15 +1,31 @@
 <?php
-// $Id: oauth_common.install,v 1.1 2010/05/20 16:16:05 hugowetterberg Exp $
 
+/**
+ * @file
+ * Installation and schema related functions for the OAuth module
+ */
+
+/**
+ * Implementation of hook_install().
+ */
 function oauth_common_install() {
   drupal_install_schema('oauth_common');
 }
+
+/**
+ * Implementation of hook_uninstall().
+ */
 function oauth_common_uninstall() {
   drupal_uninstall_schema('oauth_common');
 }
 
+/**
+ * Implementation of hook_schema().
+ */
 function oauth_common_schema() {
   $schema = array();
+
+  //TODO: Schemas shouldn't be translated
 
   $schema['oauth_common_context'] = array(
     'description' => 'Stores contexts for OAuth common',
@@ -18,6 +34,12 @@ function oauth_common_schema() {
       'export callback' => 'oauth_common_context_export',
       'list callback'   => 'oauth_common_context_list',
       'key'             => 'name',
+      'api' => array(
+        'owner' => 'oauth_common',
+        'api'   => 'oauth',
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
     ),
     'fields' => array(
       'cid' => array(
@@ -61,26 +83,104 @@ function oauth_common_schema() {
     ),
   );
 
-  $schema['oauth_common_consumer'] = array(
-    'description' => t('Information that allows external applications to access services.'),
+  $schema['oauth_common_consumer'] = _oauth_common_consumer_schema();
+  $schema['oauth_common_provider_consumer'] = _oauth_common_provider_consumer_schema();
+  $schema['oauth_common_token'] = _oauth_common_token_schema();
+  $schema['oauth_common_provider_token'] = _oauth_common_provider_token_schema();
+
+  $schema['oauth_common_nonce'] = array(
+    'description' => 'Stores timestamp against nonce for repeat attacks.',
     'fields' => array(
-      'consumer_key' => array(
-        'description' => t('Consumer key.'),
+      'nonce' => array(
+        'description' => 'The random string used on each request.',
+        'type'        => 'varchar',
+        'length'      => 255,
+        'not null'    => TRUE
+      ),
+      'timestamp' => array(
+        'description' => 'The timestamp of the request.',
+        'type'        => 'int',
+        'not null'    => TRUE
+      ),
+      'token_key' => array(
+        'description' => 'Token key.',
+        // This is our own internal key - it's 0 or 32 characters long
         'type'        => 'varchar',
         'length'      => 32,
         'not null'    => TRUE,
       ),
-      'provider_consumer' => array(
-        'description' => t('Whether this is a provider consumer or a consumer consumer'),
-        'type' => 'int',
-        'size' => 'tiny',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 1,
+    ),
+    'primary key' => array('nonce'),
+    'indexes' => array(
+      'timekey' => array('timestamp', 'token_key'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Contains the consumer schema - used by oauth_common_schema() as well as latest related update function
+ */
+function _oauth_common_consumer_schema() {
+  return array(
+    'description' => 'Keys and secrets for OAuth consumers, both those provided by this site and other sites.',
+    'fields' => array(
+      'csid' => array(
+        'type'        => 'serial',
+        'description' => 'Primary ID field for the table. Not used for anything except internal lookups.',
+        'not null'    => TRUE,
+      ),
+      'key_hash' => array(
+        'description' => 'SHA1-hash of consumer_key.',
+        'type'        => 'char',
+        'length'      => 40,
+        'not null'    => TRUE,
+      ),
+      // Key is a reserved word in MySQL so lets avoid that
+      'consumer_key' => array(
+        'description' => 'Consumer key.',
+        'type'        => 'text',
+        'not null'    => TRUE,
       ),
       'secret' => array(
-        'description' => t('Consumer secret.'),
-        'type'        => 'varchar',
+        'description' => 'Consumer secret.',
+        'type'        => 'text',
+        'not null'    => TRUE,
+      ),
+      'configuration' => array(
+        'description' => 'Consumer configuration',
+        'type'        => 'text',
+        'serialized'  => TRUE,
+        'size'        => 'big',
+        'not null'    => TRUE,
+        'object default' => array(),
+      ),
+    ),
+    'primary key' => array('csid'),
+    'indexes' => array(
+      'key_hash' => array('key_hash'),
+    ),
+  );
+}
+
+/**
+ * Contains the provider consumer schema - used by oauth_common_schema() as well as latest related update function
+ */
+function _oauth_common_provider_consumer_schema() {
+  return array(
+    'description' => 'Additional data for OAuth consumers provided by this site.',
+    'fields' => array(
+      'csid' => array(
+        'description' => 'The {oauth_common_consumer}.csid this data is related to.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'default' => 0
+      ),
+      'consumer_key' => array(
+        'description' => 'Consumer key.',
+        // This is our own internal key - it's always 32 characters long
+        'type'        => 'char',
         'length'      => 32,
         'not null'    => TRUE,
       ),
@@ -97,64 +197,122 @@ function oauth_common_schema() {
         'description' => 'The last time the consumer was edited, as a Unix timestamp.',
       ),
       'uid' => array(
-        'description' => t('The application owner.'),
+        'description' => 'The application owner.',
         'type'        => 'int',
         'unsigned'    => TRUE,
         'not null'    => TRUE,
       ),
       'name' => array(
-        'description' => t('The application name.'),
+        'description' => 'The application name.',
         'type'        => 'varchar',
         'length'      => 128,
         'not null'    => TRUE,
       ),
       'context' => array(
-        'description' => t('The application context.'),
+        'description' => 'The application context.',
         'type'        => 'varchar',
         'length'      => 32,
         'not null'    => TRUE,
         'default'     => '',
       ),
       'callback_url' => array(
-        'description' => t('Callback url.'),
+        'description' => 'Callback url.',
         'type'        => 'varchar',
         'length'      => 255,
         'not null'    => TRUE,
       ),
-      'configuration' => array(
-        'description' => t('Consumer configuration'),
-        'type'        => 'text',
-        'serialized'  => TRUE,
-        'size'        => 'big',
-        'not null'    => TRUE,
-        'object default' => array(),
-      ),
     ),
-    'primary key' => array('consumer_key', 'provider_consumer'),
-    'index' => array(
-      'user' => array('uid'),
+    'primary key' => array('consumer_key'),
+    'unique keys' => array(
+      'csid' => array('csid'),
+    ),
+    'indexes' => array(
+       'uid' => array('uid'),
     ),
   );
-  $schema['oauth_common_token'] = array(
-    'description' => t('Tokens stored on behalf of providers or consumers for request and services accesses.'),
+}
+
+/**
+ * Contains the token schema - used by oauth_common_schema() as well as latest related update function
+ */
+function _oauth_common_token_schema() {
+  return array(
+    'description' => 'Tokens stored on behalf of providers or consumers for request and services accesses.',
     'fields' => array(
-      'token_key' => array(
-        'description' => t('Token key.'),
-        'type'        => 'varchar',
-        'length'      => 32,
+      'tid' => array(
+        'type'        => 'serial',
+        'description' => 'Primary ID field for the table. Not used for anything except internal lookups.',
         'not null'    => TRUE,
       ),
-      'provider_token' => array(
-        'description' => t('Whether this is a consumer or a provider token'),
+      'csid' => array(
+        'description' => 'The {oauth_common_consumer}.csid this token is related to.',
         'type' => 'int',
-        'size' => 'tiny',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'default' => 1,
+        'default' => 0
+      ),
+      'key_hash' => array(
+        'description' => 'SHA1-hash of token_key.',
+        'type'        => 'char',
+        'length'      => 40,
+        'not null'    => TRUE,
+      ),
+      // Key is a reserved word in MySQL so lets avoid that
+      'token_key' => array(
+        'description' => 'Token key.',
+        'type'        => 'text',
+        'not null'    => TRUE,
       ),
       'secret' => array(
-        'description' => t('Token secret.'),
-        'type'        => 'varchar',
+        'description' => 'Token secret.',
+        'type'        => 'text',
+        'not null'    => TRUE,
+      ),
+      'expires' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The expiry time for the token, as a Unix timestamp.',
+      ),
+      'type' => array(
+        'description' => 'Token type: request or access.',
+        'type'        => 'int',
+        'size'        => 'tiny',
+        'not null'    => TRUE,
+        'default'     => 1, //OAUTH_COMMON_TOKEN_TYPE_ACCESS
+      ),
+      'uid' => array(
+        'description' => 'User ID from {user}.uid.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ),
+    ),
+    'primary key' => array('tid'),
+    'indexes' => array(
+      'key_hash' => array('key_hash'),
+    ),
+  );
+}
+
+/**
+ * Contains the provider token schema - used by oauth_common_schema() as well as latest related update function
+ */
+function _oauth_common_provider_token_schema() {
+  return array(
+    'description' => 'Additional data for OAuth tokens provided by this site.',
+    'fields' => array(
+      'tid' => array(
+        'description' => 'The {oauth_common_token}.tid this data is related to.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'default' => 0
+      ),
+      'token_key' => array(
+        'description' => 'Token key.',
+        // This is our own internal key - it's always 32 characters long
+        'type'        => 'char',
         'length'      => 32,
         'not null'    => TRUE,
       ),
@@ -170,79 +328,28 @@ function oauth_common_schema() {
         'default' => 0,
         'description' => 'The last time the token was edited, as a Unix timestamp.',
       ),
-      'expires' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => 'The expiry time for the token, as a Unix timestamp.',
-      ),
-      'type' => array(
-        'description' => t('Token type: request or access.'),
-        'type'        => 'varchar',
-        'length'      => 7,
-        'not null'    => TRUE,
-      ),
-      'uid' => array(
-        'description' => t('User ID from {user}.uid.'),
-        'type'        => 'int',
-        'unsigned'    => TRUE,
-        'not null'    => TRUE,
-        'default'     => 0,
-      ),
-      'consumer_key' => array(
-        'description' => t('Consumer key from {oauth_common_consumer}.consumer_key.'),
-        'type'        => 'varchar',
-        'length'      => 32,
-        'not null'    => TRUE,
-      ),
       'services' => array(
-        'description' => t('An array of services that the user allowed the consumer to access.'),
+        'description' => 'An array of services that the user allowed the consumer to access.',
         'type'        => 'text',
       ),
       'authorized' => array(
-        'description' => t('In case its a request token, it checks if the user already authorized the consumer to get an access token.'),
+        'description' => 'In case its a request token, it checks if the user already authorized the consumer to get an access token.',
         'type'        => 'int',
         'size'        => 'tiny',
         'not null'    => TRUE,
         'default'     => 0,
       ),
     ),
-   'primary key' => array('token_key', 'provider_token'),
-   'indexes' => array(
-      'token_key_type' => array('token_key', 'provider_token', 'type'),
-      'consumer_key' => array('consumer_key', 'provider_token'),
+    'primary key' => array('token_key'),
+    'unique keys' => array(
+      'tid' => array('tid'),
     ),
   );
-
-  $schema['oauth_common_nonce'] = array(
-    'description' => t('Stores timestamp against nonce for repeat attacks.'),
-    'fields' => array(
-      'nonce' => array(
-        'description' => t('The random 32 characters long string used on each request.'),
-        'type'        => 'varchar',
-        'length'      => 32,
-        'not null'    => TRUE
-      ),
-      'timestamp' => array(
-        'description' => t('The timestamp of the request.'),
-        'type'        => 'int',
-        'not null'    => TRUE
-      ),
-      'token' => array(
-        'description' => t('Tokens for request and services accesses.'),
-        'type'        => 'varchar',
-        'length'      => 32
-      ),
-    ),
-    'primary key' => array('nonce'),
-    'indexes' => array(
-      'timestamp' => array('timestamp'),
-    ),
-  );
-  return $schema;
 }
 
 /**
+ * Implementation of hook_update_N().
+ *
  * This update either creates a authorization levels table, or transfers the
  * authorization levels table from the services_oauth module.
  */
@@ -252,6 +359,8 @@ function oauth_common_update_6001() {
 }
 
 /**
+ * Implementation of hook_update_N().
+ *
  * This update adds a expiry time column to the tokens table.
  */
 function oauth_common_update_6002() {
@@ -260,6 +369,8 @@ function oauth_common_update_6002() {
 }
 
 /**
+ * Implementation of hook_update_N().
+ *
  * This update makes it possible for consumers to store tokens in the common
  * token table. It also adds the possibility to add consumer-consumers to the
  * common consumer table.
@@ -274,16 +385,20 @@ function oauth_common_update_6003() {
 }
 
 /**
+ * Implementation of hook_update_N().
+ *
  * This update adds the concept of contexts for consumers and authorization levels.
  * Also adding a couple of indexes that make sense when oauth_common is
  * acting as a consumer of other services.
  */
 function oauth_common_update_6100() {
   module_load_include('6100.inc', 'oauth_common', 'updates/update');
-  return _oauth_common_update_6200();
+  return _oauth_common_update_6100();
 }
 
 /**
+ * Implementation of hook_update_N().
+ *
  * This update turns the contexts into ctools-manageable entities and migrates
  * the authorization levels into the new contexts table.
  */
@@ -293,9 +408,31 @@ function oauth_common_update_6200() {
 }
 
 /**
+ * Implementation of hook_update_N().
+ *
  * This update unifies the handling of provider and consumer consumer entries.
  */
 function oauth_common_update_6201() {
   module_load_include('6201.inc', 'oauth_common', 'updates/update');
   return _oauth_common_update_6201();
+}
+
+/**
+ * Implementation of hook_update_N().
+ *
+ * This update allows for longer consumer secrets.
+ */
+function oauth_common_update_6202() {
+  module_load_include('6202.inc', 'oauth_common', 'updates/update');
+  return _oauth_common_update_6202();
+}
+
+/**
+ * Implementation of hook_update_N().
+ *
+ * This update massively refactors the database.
+ */
+function oauth_common_update_6300() {
+  module_load_include('6300.inc', 'oauth_common', 'updates/update');
+  return _oauth_common_update_6300();
 }

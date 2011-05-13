@@ -1,5 +1,4 @@
 <?php
-// $Id: update.6100.inc,v 1.1 2010/05/20 16:16:05 hugowetterberg Exp $
 
 /**
  * This update adds the concept of contexts for consumers and authorization levels.
@@ -61,9 +60,6 @@ function _oauth_common_update_6100() {
     'not null'    => TRUE,
     'default'     => 'default',
   ));
-
-  // Add the default context
-  oauth_common_install_default_oauth_context();
 
   return $ret;
 }

@@ -7,9 +7,9 @@ dependencies[] = oauth_common
 core = 6.x
 php = 5.2
 
-; Information added by drupal.org packaging script on 2010-05-20
-version = "6.x-3.0-beta1"
+; Information added by drupal.org packaging script on 2011-04-06
+version = "6.x-3.0-beta4"
 core = "6.x"
 project = "oauth"
-datestamp = "1274373307"
+datestamp = "1302103016"
 

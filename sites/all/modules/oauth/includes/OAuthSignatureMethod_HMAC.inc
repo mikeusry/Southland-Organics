@@ -1,5 +1,4 @@
 <?php
-// $Id: OAuthSignatureMethod_HMAC.inc,v 1.1 2010/05/20 16:16:05 hugowetterberg Exp $
 
 /**
  * A generic signature method implementation that leverages hash_hmac() for
@@ -30,8 +29,8 @@ class OAuthSignatureMethod_HMAC extends OAuthSignatureMethod {
 
     // Find a supported algorithm among the candidates
     foreach ($algo as $a) {
-      if (in_array($a, $algos)) {
-        $this->algo = $a;
+      if (in_array(strtolower($a), $algos)) {
+        $this->algo = strtolower($a);
         continue;
       }
     }

@@ -1,5 +1,4 @@
 <?php
-// $Id: update.6200.inc,v 1.1 2010/05/20 16:16:05 hugowetterberg Exp $
 
 /**
  * This update turns the contexts into ctools-manageable entities and migrates
@@ -14,7 +13,7 @@ function _oauth_common_update_6200() {
 
   // Fetch the authorization levels and create contexts from them
   $res = db_query("SELECT * FROM {oauth_authorization_levels}");
-  while($l = db_fetch_array($res)) {
+  while ($l = db_fetch_array($res)) {
     $name = $l['name'];
     $context = $l['context'];
     unset($l['name'], $l['context']);

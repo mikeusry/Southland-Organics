@@ -1,5 +1,4 @@
 <?php
-// $Id: update.6003.inc,v 1.1 2010/05/20 16:16:05 hugowetterberg Exp $
 
 /**
  * This update makes it possible for consumers to store tokens in the common

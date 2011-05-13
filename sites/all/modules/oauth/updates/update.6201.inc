@@ -1,5 +1,4 @@
 <?php
-// $Id: update.6201.inc,v 1.1 2010/05/20 16:16:05 hugowetterberg Exp $
 
 /**
  * This update unifies the handling of provider and consumer consumer entries.
@@ -38,6 +37,7 @@ function _oauth_common_update_6201() {
   // Transfer all DrupalOAuthConsumerTokens to DrupalOAuthConsumer
   $res = db_query('SELECT * FROM {oauth_common_consumer_token}');
   while ($ct = db_fetch_array($res)) {
+    //TODO: Fix this - the upgrade path might be broken?
     $consumer = new DrupalOAuthConsumer($ct['token_key'], $ct['secret'], 'oob', FALSE, array(
       'uid' => $ct['uid'],
       'name' => $ct['provider_url'],

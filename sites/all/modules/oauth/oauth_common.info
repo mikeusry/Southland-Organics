@@ -1,18 +1,26 @@
-; $Id: oauth_common.info,v 1.2 2010/05/20 16:27:38 hugowetterberg Exp $
 name = OAuth
 description = Provides OAuth functionality
 package = "OAuth"
 
 dependencies[] = autoload
-dependencies[] = inputstream
-dependencies[] = ctools
+recommends[] = ctools
+suggests[] = inputstream
 
 core = 6.x
 php = 5.2
 
-; Information added by drupal.org packaging script on 2010-05-20
-version = "6.x-3.0-beta1"
+files[] = lib/OAuth.php
+files[] = includes/DrupalOAuthServer.inc
+files[] = includes/DrupalOAuthDataStore.inc
+files[] = includes/DrupalOAuthRequest.inc
+files[] = includes/DrupalOAuthToken.inc
+files[] = includes/DrupalOAuthConsumer.inc
+files[] = includes/DrupalOAuthClient.inc
+files[] = includes/OAuthSignatureMethod_HMAC.inc
+
+; Information added by drupal.org packaging script on 2011-04-06
+version = "6.x-3.0-beta4"
 core = "6.x"
 project = "oauth"
-datestamp = "1274373307"
+datestamp = "1302103016"
 
