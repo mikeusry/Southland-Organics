@@ -1,0 +1,70 @@
+Submenu Tree
+
+
+=======
+6.x-1.3
+
+Added new feature: Extended primary links block. 
+
+The Extended primary links block extends the primary links menu into a block. 
+
+In other words, the Extended primary links block selects the menu designated as the primary links menu and displays the rest of that menu (ie. from the second or third level downwards) in a block. 
+
+If no primary links menu exist, it will use the secondary links menu if that exists. 
+
+
+=======
+6.x-1.2
+
+#272518: Siblingmenue not shown if no submenues found
+
+
+=======
+6.x-1.1
+
+Critical bugfix: #265453: Table 'drupal.node_submenutree' doesn't exist
+
+
+=======
+6.x-1.0
+
+First port to Drupal 6.x.
+#247198: Titles Only View -> Links. Displaying as titles now works. Minor bugfix.
+
+If upgrading drupal core from 5.x to 6.x, please first upgrade submenutree to 5.x-0.4 before upgrading to 6.x-1.0. 
+
+
+=======
+5.x-1.0
+
+Bring 5.x version up to 1.0 to match 6.x versioning.
+#247198: Titles Only View -> Links. Displaying as titles now works. Minor bugfix.
+
+
+=======
+5.x-0.4
+
+Changed database table schema (and associated code refactoring)
+Added configurable titles (#188753)
+Added sibling menus (#188753)
+
+(Please read the readme for upgrading instructions)
+
+
+=======
+5.x-0.3
+
+Proper ordering of items (#189604).
+
+=======
+5.x-0.2
+
+Submenu Tree can be displayed in a block (#186880).
+
+
+=======
+5.x-0.1
+
+First release
+
+

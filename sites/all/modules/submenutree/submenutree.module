@@ -31,6 +31,12 @@ function submenutree_help($section) {
   }
 }
 
+/**
+ * Implementation of hook_perm().
+ */
+function submenutree_perm() {
+  return array('administer submenu trees', 'administer siblingmenu trees');
+}
 
 /**
  * Implementation of hook_form_alter().
@@ -53,6 +59,7 @@ function submenutree_form_alter(&$form, $form_state, $form_id) {
     $form['menu']['submenutree'] = array(
       '#type' => 'fieldset',
       '#title' => t('Submenu Tree Settings'),
+      '#access' => user_access('administer submenu trees'),
       '#collapsible' => true,
       '#collapsed' => !$node->submenutree_enable,
 
@@ -105,6 +112,7 @@ function submenutree_form_alter(&$form, $form_state, $form_id) {
     $form['menu']['siblingmenutree'] = array(
       '#type' => 'fieldset',
       '#title' => t('Siblingmenu Tree Settings'),
+      '#access' => user_access('administer siblingmenu trees'),
       '#collapsible' => true,
       '#collapsed' => !$node->siblingmenutree_enable,
 
@@ -173,10 +181,10 @@ function submenutree_nodeapi(&$node, $op, $teaser, $page) {
       break;
 
     case 'update':
-      if (!$node->submenutree_enable && !$node->siblingmenutree_enable) {
+      if (empty($node->submenutree_enable) && empty($node->siblingmenutree_enable)) {
         db_query('DELETE FROM {node_submenutree} WHERE nid = %d', $node->nid);
       }
-      // deliberate fullthrough
+      // deliberate fallthrough
 
     case 'insert':
       if ($node->submenutree_enable || $node->siblingmenutree_enable) {
@@ -192,11 +200,11 @@ function submenutree_nodeapi(&$node, $op, $teaser, $page) {
     case 'presave':
       // copy fields from $node->menu['submenutree']['submenutree_*'] to ['submenutree_*'] if necessary
       // Shouldn't drupal flatten these form fields already? Apparently not
-      if (!empty($node->menu['submenutree'])) {
+      if (!empty($node->menu['submenutree']) && user_access('administer submenu trees')) {
         foreach ($node->menu['submenutree'] as $k => $v)
           $node->$k = $v;
       }
-      if (!empty($node->menu['siblingmenutree'])) {
+      if (!empty($node->menu['siblingmenutree']) && user_access('administer siblingmenu trees')) {
         foreach ($node->menu['siblingmenutree'] as $k => $v)
           $node->$k = $v;
       }
@@ -299,12 +307,16 @@ function submenutree_block($op = 'list', $delta = 0, $edit = array()) {
 function submenutree_theme() {
   return array(
     'submenu_tree_menu' => array(
+      'arguments' => array('tree' => NULL, 'title' => ''),
     ),
     'submenu_tree_titles' => array(
+      'arguments' => array('items' => NULL, 'title' => ''),
     ),
     'submenu_tree_teasers' => array(
+      'arguments' => array('items' => NULL, 'title' => '', 'links' => FALSE),
     ),
     'submenu_tree_fulltext' => array(
+      'arguments' => array('items' => NULL, 'title' => '', 'links' => FALSE),
     ),
   );
 }
@@ -519,7 +531,7 @@ function theme_submenu_tree_titles($items, $title = null) {
 }
 
 
-function theme_submenu_tree_teasers($items, $title = null, $links) {
+function theme_submenu_tree_teasers($items, $title = null, $links = FALSE) {
   $output = '';
   if (isset($title))
     $output .= '<h3>'. $title .'</h3>';
@@ -530,7 +542,7 @@ function theme_submenu_tree_teasers($items, $title = null, $links) {
 }
 
 
-function theme_submenu_tree_fulltext($items, $title = null, $links) {
+function theme_submenu_tree_fulltext($items, $title = null, $links = FALSE) {
   $output = '';
   if (isset($title))
     $output .= '<h3>'. $title .'</h3>';
@@ -539,5 +551,3 @@ function theme_submenu_tree_fulltext($items, $title = null, $links) {
   }
   return $output;
 }
-
-

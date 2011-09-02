@@ -1,9 +1,11 @@
 /* @override 
-	http://www.southlandorganics.com/sites/all/themes/acquia_prosper/css/local.css
-	http://www.southlandorganics.com/sites/all/themes/acquia_prosper/design_packs/gray/gray.css?X
-	http://www.southlandorganics.com/sites/all/themes/southland/css/local.css
+	https://www.southlandorganics.com/sites/all/themes/southland/css/local.css
+	https://www.southlandorganics.com/modules/system/defaults.css?g
 */
 
+div.breadcrumb {
+	margin-top: 5px;
+}
 .slider p {
 	margin-right: 20px;
 }
@@ -714,8 +716,75 @@ ul.slidenav a:focus {
 a.feed-icon {
 }
 
-/* @group Custom Blocks */
+/* @group LL Backyard Page */
 
+div.aside {
+	background-color: #6C9930;
+	display: inline-block;
+	width: 280px;
+	padding: 10px;
+	margin-left: 10px;
+}
+
+div.aside h2 {
+	font: bold 25px "Waiting for the Sunrise";
+	margin: 0;
+}
+
+div.aside li {
+	margin-left: 20px;
+}
+
+div.ll-main {
+	width: 390px;
+	float: left;
+}
+
+#block-views-product_blocks-block_1 {
+	width: 185px;
+	margin: 0;
+	padding: 5px;
+	border-style: solid;
+	border-width: thin;
+}
+
+#block-views-product_blocks-block_1 div.inner.clearfix {
+	margin-left: 0;
+}
+
+#block-views-product_blocks-block_1 h2.title.block-title {
+	text-align: center;
+	margin-bottom: 0;
+	font: bold 36px "Waiting for the Sunrise";
+}
+
+#edit-attributes-3-wrapper {
+	margin: 0;
+}
+
+#block-block-9 {
+	width: 520px;
+	margin-bottom: 0;
+}
+
+#block-block-9 img {
+	margin: 0;
+	padding: 0;
+	bottom: 10px;
+	position: relative;
+}
+
+
+
+/* @end */
+
+/* @group Custom Blocks */
+#block-block-10 {
+	margin: 0;
+	position: relative;
+	top: 278px;
+	right: 10px;
+}
 #block-user-0 h2.title.block-title {
 	display: none;
 }
@@ -789,18 +858,30 @@ td.cart-block-item-desc {
 	display: none;
 }
 
-#ajaxCartUpdate {
-}
-
-div.block-uc_ajax_cart {
+#block-uc_ajax_cart-0 {
+	border-top-color: #0C753E;
+	border-top-style: outset;
+	padding-top: 10px;
 }
 
 #block-uc_ajax_cart-0 div h2.title.block-title {
 	background: url(../images/bag_green.png) no-repeat -12px -5px;
+	text-align: left;
 	height: 64px;
-	text-align: center;
-	font-size: 1.5em;
-	text-indent: 25px;
+	float: left;
+	width: 52px;
+}
+
+#ajax-cart-headline {
+	font: bold 22px "Waiting for the Sunrise";
+	color: #84C553;
+	text-shadow: #424242 1px 1px 0;
+	height: 77px;
+	margin-bottom: 0;
+}
+
+#ajaxCartUpdate li.last a {
+	float: right;
 }
 
 
@@ -899,6 +980,38 @@ div.o-news {
 
 /* @end */
 
+
+
+/* @end */
+
+#block-addthis-0 div.inner.clearfix h2.title.block-title {
+	font: bold 23px/24px "Waiting for the Sunrise";
+}
+
+#content-content a.feed-icon img {
+	display: none;
+}
+
+/* @group Checkout */
+
+#payment_details div.secure img {
+	float: left;
+}
+
+#payment_details div.secure-strong {
+	font-weight: bold;
+	font-size: 24px;
+	margin-bottom: 5px;
+}
+
+div#payment_details.solid-border {
+	background-color: silver;
+}
+
+#customer-pane label {
+	float: left;
+	margin-right: 10px;
+}
 
 
 /* @end */

@@ -1,0 +1,14 @@
+; $Id$
+name = Optional Checkout Review
+description = Set whether checkout review is required.
+dependencies[] = uc_cart
+version = 6.x-1.0-beta1
+package = Ubercart - extra
+core = 6.x
+
+; Information added by drupal.org packaging script on 2011-04-03
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "uc_optional_checkout_review"
+datestamp = "1301790604"
+
