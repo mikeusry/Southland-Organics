@@ -6,6 +6,7 @@
 <head>
   <title><?php print $head_title; ?></title>
   <link href='http://fonts.googleapis.com/css?family=Waiting+for+the+Sunrise' rel='stylesheet' type='text/css'>
+  <link href="https://plus.google.com/114549437912626034894" />
   <?php print $head; ?>
   <?php print $styles; ?>
   <?php print $setting_styles; ?>

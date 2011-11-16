@@ -1,5 +1,22 @@
 -------------------------------------------------------------------------------------
-6.x-1.4 2010-xx-xx
+6.x-1.5 2011-11-15
+-------------------------------------------------------------------------------------
+- #1293420 by Feng-Shui: Custom build mode key name can exceed db field size.
+- #1169466 by grahamgilchrist: do not use block templates if content is empty.
+- #1003380 by vadym.kononenko: views field class should be added by default.
+- #1004096 by swentel: deleting a build mode breaks synced build modes.
+- #1016664 by jstoller: Add field count variable to groups.
+- #1059336 by jstoller: Add field variables containing groups and regions.
+- #1194922 and 1194914 by swentel and dbeheydt: fix notices with new patch.
+- #1221036 by jstoller: fix notice due to function param change in features.
+- #1230038 by swentel: fix (public) xss exploit.
+- Hide the classes select box on views fields if there are no styles.
+
+- #1168130 by swentel: backport some of the techniques of D7 storage was included
+           but has been removed. It is available in 6.x-2.x.
+
+-------------------------------------------------------------------------------------
+6.x-1.4 2010-12-17
 -------------------------------------------------------------------------------------
 - #922114 by Shawn DeArmond: Exporting ds features properly requires strongarm.
 - #931510 by joelstein: fix occasional features errors when reverting.
@@ -64,4 +81,3 @@
 -------------------------------------------------------------------------------------
 - Initial release.
 
-/* Last updated: $Id: CHANGELOG.txt,v 1.1.2.50 2010/10/28 14:21:52 swentel Exp $ */

@@ -1,5 +1,4 @@
 <?php
-// $Id: ds.module,v 1.1.2.75 2010/10/28 23:47:55 swentel Exp $
 
 /**
  * Core functions for the Display Suite module.
@@ -218,7 +217,7 @@ function ds_build_fields_and_regions(&$object, $module) {
         if (isset($field_settings[$key]['css-class']) && !empty($field_settings[$key]['css-class'])) {
           $class .= ' '. $field_settings[$key]['css-class'];
         }
-        if ($field['type'] == DS_FIELD_TYPE_GROUP) {
+        if (isset($field['type']) && $field['type'] == DS_FIELD_TYPE_GROUP) {
           $class .= ' field-group';
         }
 
@@ -367,10 +366,14 @@ function ds_render_content($object, $module, $vars, $theme_function = 'ds_field'
     foreach ($object->ds_groups as $group => $fields) {
       asort($fields);
       $group_content = '';
+      $field_count = 0;
+      $group_fields = array();
       foreach ($fields as $key => $weight) {
         $field_content = isset($vars[$key .'_rendered']) ? $vars[$key .'_rendered'] : '';
         if (!empty($field_content)) {
           $group_content .= theme($theme_function, $field_content, $object->ds_fields[$key]);
+          $field_count++;
+          $group_fields[] = $object->ds_fields[$key];
           unset($object->ds_fields[$key]);
         }
       }
@@ -391,6 +394,8 @@ function ds_render_content($object, $module, $vars, $theme_function = 'ds_field'
         }
         else {
           $object->ds_fields[$group]['content'] = $group_content;
+          $object->ds_fields[$group]['count'] = $field_count;
+          $object->ds_fields[$group]['fields'] = $group_fields;
         }
       }
       else {
@@ -408,6 +413,7 @@ function ds_render_content($object, $module, $vars, $theme_function = 'ds_field'
       $region = $regions[$region_name];
 
       $count = 0;
+      $region_fields = array();
       // Loop through all fields after ordering on weight.
       asort($region);
       foreach ($region as $key => $weight) {
@@ -415,10 +421,12 @@ function ds_render_content($object, $module, $vars, $theme_function = 'ds_field'
         // Theming function. This implies a 'content' key exists.
         if (isset($object->ds_fields[$key]['theme']) && isset($object->ds_fields[$key]['content'])) {
           $count++;
+          $region_fields[] = $object->ds_fields[$key];
           $region_content .= theme($object->ds_fields[$key]['theme'], $object->ds_fields[$key]['content'], $object->ds_fields[$key]);
         }
         elseif (isset($object->ds_fields[$key]['tab'])) {
           $count++;
+          $region_fields[] = $object->ds_fields[$key];
           $region_content .= theme('ds_tabs', $object->ds_fields[$key]);
         }
         // Default ds_field theming function.
@@ -426,6 +434,7 @@ function ds_render_content($object, $module, $vars, $theme_function = 'ds_field'
           $field_content = isset($vars[$key .'_rendered']) ? $vars[$key .'_rendered'] : '';
           if (!empty($field_content)) {
             $count++;
+            $region_fields[] = $object->ds_fields[$key];
             $region_content .= theme($theme_function, $field_content, $object->ds_fields[$key]);
           }
         }
@@ -441,6 +450,7 @@ function ds_render_content($object, $module, $vars, $theme_function = 'ds_field'
           'content' => $region_content,
           'extra_class' => $style,
           'count' => $count,
+          'fields' => $region_fields,
         );
       }
     }

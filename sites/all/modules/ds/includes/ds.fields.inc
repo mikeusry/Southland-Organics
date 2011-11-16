@@ -1,5 +1,4 @@
 <?php
-// $Id: ds.fields.inc,v 1.1.2.44 2010/10/29 10:02:08 swentel Exp $
 
 /**
  * @file
@@ -190,7 +189,7 @@ function ds_code_field_form($form_state, $module, $all_fields, $object = '', $ke
         }
       }
 
-      $types[$tkey] = $type->name;
+      $types[$tkey] = check_plain($type->name);
     }
     $form['code_identity']['code_exclude'] = array(
       '#type' => 'checkboxes',
@@ -399,7 +398,7 @@ function ds_preprocess_field_form($form_state, $module, $all_fields, $object = '
   if (isset($api_info['types']) && count($api_info['types']()) > 1) {
     $types = array();
     foreach ($api_info['types']() as $tkey => $type) {
-      $types[$tkey] = $type->name;
+      $types[$tkey] = check_plain($type->name);
     }
     $form['preprocess_identity']['preprocess_exclude'] = array(
       '#type' => 'checkboxes',
@@ -558,7 +557,7 @@ function ds_block_field_form($form_state, $module, $all_fields, $object = '', $k
         }
       }
 
-      $types[$tkey] = $type->name;
+      $types[$tkey] = check_plain($type->name);
     }
     $form['block_identity']['block_exclude'] = array(
       '#type' => 'checkboxes',
@@ -752,7 +751,7 @@ function ds_fields_examples($module) {
     foreach ($api_info['types']() as $tkey => $type) {
 
       $types[$tkey] = array(
-        'title' => $type->name,
+        'title' => check_plain($type->name),
         'href' => 'admin/build/ds/'. $module .'/fields-examples',
         'query' => array('type' => $tkey),
       );

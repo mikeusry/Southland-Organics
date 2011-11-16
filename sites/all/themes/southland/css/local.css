@@ -1,6 +1,6 @@
 /* @override 
-	https://www.southlandorganics.com/sites/all/themes/southland/css/local.css
-	https://www.southlandorganics.com/modules/system/defaults.css?g
+	http://www.southlandorganics.com/sites/all/themes/southland/css/local.css?M
+	http://www.southlandorganics.com/sites/all/themes/southland/css/local.css?N
 */
 
 div.breadcrumb {
@@ -20,6 +20,38 @@ div.views-field-title a ins h1 {
 	margin-bottom: 0;
 	padding-bottom: 0;
 }
+
+h1.title {
+	position: relative;
+	z-index: 10;
+}
+
+/* @group Products Page */
+
+#block-views-uc_products-block_1 h2.title.block-title, #block-views-uc_products-block_2 h2.title.block-title, #block-views-uc_products-block_3A5CFF9 h2.title.block-title {
+	text-align: center;
+	background-color: #A5CFF9;
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+
+div.view-uc-products td.col-1, div.view-uc-products td.col-2, div.view-uc-products td.col-3 {
+	width: 33%;
+	text-align: center;
+}
+
+div.view-uc-products td div.views-field-field-image-cache-fid div.field-content {
+	height: 160px;
+}
+
+div.view-uc-products tbody div.views-field-title a {
+	font-weight: bold;
+}
+
+
+
+/* @end */
+
 
 
 /* @group Basic Typography & Colors
@@ -575,6 +607,16 @@ div#primary-menu-inner.primary-menu-inner {
 
 /* @end */
 /* @group Footer - single column list */
+
+div.microdata {
+	float: left;
+	color: white;
+}
+
+#footer-message-text-inner div.microdata div a {
+	clear: left;
+	float: left;
+}
 .footer .fusion-inline-menu {
 	margin: 0;
 }
@@ -613,6 +655,39 @@ div#primary-menu-inner.primary-menu-inner {
 
 /* @group Nodes
 /-------------------------------------------------------------- */
+
+/* @group Product Nodes */
+
+div.field.field-product-benefits {
+	background-color: #301E04;
+	color: white;
+	padding: 7px;
+}
+
+.nd-region-left {
+  width: 25%;
+}
+
+.nd-region-right {
+  width: 35%;
+}
+div.nd-region-middle {
+	width: 420px;
+}
+
+div.node-type-product div.nd-region-header img.imagefield-field_header_image {
+	position: relative;
+	right: 17px;
+	bottom: 10px;
+}
+
+img.imagecache.imagecache-header_wsidebar.imagecache-default.imagecache-header_wsidebar_default {
+	width: 710px;
+	padding: 0;
+}
+
+
+/* @end */
 .node_read_more a:link,
 .node_read_more a:visited {
   background: #aeaeae;
@@ -622,11 +697,39 @@ div#primary-menu-inner.primary-menu-inner {
   text-transform: lowercase;
 }
 
+div.field.field-product-highlight {
+	position: relative;
+	bottom: 20px;
+	color: white;
+	background-color: #6C9930;
+	width: 710px;
+	right: 10px;
+	padding-bottom: 1px;
+	padding-top: 1px;
+	text-align: center;
+	padding-left: 10px;
+	margin-left: 10px;
+}
+
 .postscript-bottom-wrapper .node_read_more a:link,
 .postscript-bottom-wrapper .node_read_more a:visited,
 .footer-wrapper .node_read_more a:link,
 .footer-wrapper .node_read_more a:visited {
   color: #fff;
+}
+
+div.nd-region-right div.field-product-benefits div.field-label {
+	text-align: center;
+	font: bold 28px/28px "Waiting for the Sunrise";
+}
+
+div.node-type-product div.nd-region-footer a.imagecache-field_image_cache img {
+	float: left;
+	margin-right: 20px;
+}
+
+tr.head {
+	background-color: silver;
 }
 /* @end */
 
@@ -803,10 +906,6 @@ div#edit-name-wrapper.form-item, div#edit-pass-wrapper.form-item {
 
 /* @group Views Showcase */
 
-div div.views-row {
-	width: 700px;
-}
-
 .FPSS img.imagefield {
 	margin: 0;
 	padding: 0;
@@ -864,21 +963,29 @@ td.cart-block-item-desc {
 	padding-top: 10px;
 }
 
+/* 
+
 #block-uc_ajax_cart-0 div h2.title.block-title {
-	background: url(../images/bag_green.png) no-repeat -12px -5px;
+	background: url(../images/bag_green.png) no-repeat -12px 25px;
 	text-align: left;
-	height: 64px;
+	height: 94px;
 	float: left;
-	width: 52px;
+	width: 127px;
 }
+ */
 
 #ajax-cart-headline {
-	font: bold 22px "Waiting for the Sunrise";
+	font: bold 40px/0 "Waiting for the Sunrise";
 	color: #84C553;
 	text-shadow: #424242 1px 1px 0;
-	height: 77px;
 	margin-bottom: 0;
+	position: relative;
 }
+
+div#cart-block-contents-ajax.cart-empty {
+
+}
+
 
 #ajaxCartUpdate li.last a {
 	float: right;
@@ -953,27 +1060,6 @@ div.o-news {
 	font: bold 23px/24px "Waiting for the Sunrise";
 	position: relative;
 	bottom: 20px;
-}
-
-
-
-/* @end */
-
-/* @group Port Front */
-
-.Port-Block img {
-	float: left;
-	margin-right: 10px;
-}
-
-.Port-Block p {
-	margin-right: 20px;
-	font-size: 20px;
-	line-height: 22px;
-}
-
-.Port-Block a {
-	color: green;
 }
 
 

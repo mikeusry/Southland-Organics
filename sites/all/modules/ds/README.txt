@@ -1,4 +1,3 @@
-/* $Id: README.txt,v 1.1.2.1 2009/11/27 13:28:44 swentel Exp $ */
 
 -- SUMMARY --
 
@@ -13,6 +12,7 @@ To submit bug reports and feature suggestions, or to track changes:
 
 -- MAINTAINERS --
 
+xtfer - http://drupal.org/users/31698 (6.x only)
 swentel - http://drupal.org/user/107403
 stalski - http://drupal.org/user/322618
 zuuperman - http://drupal.org/user/361625

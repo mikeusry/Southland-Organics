@@ -1,5 +1,4 @@
 <?php
-// $Id: ds.buildmodes.inc,v 1.1.2.21 2010/06/08 00:22:20 swentel Exp $
 
 /**
  * @file
@@ -92,6 +91,7 @@ function ds_build_mode_form($form_state, $module, $build_mode = '') {
     '#title' => 'Key name',
     '#description' => t('The machine-readable name of this build mode.'),
     '#required' => TRUE,
+    '#maxlength' => 32,
   );
   if (!empty($build_mode)) {
     $form['identity']['key']['#disabled'] = TRUE;

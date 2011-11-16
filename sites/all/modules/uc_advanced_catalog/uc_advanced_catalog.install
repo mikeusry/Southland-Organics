@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * @file
+ * Advanced catalog module install file.
+ */
+
+/**
+ * Implentation of the hook_install().
+ */
+function uc_advanced_catalog_install() {
+  drupal_set_message(st('Visit <a href="!url">advanced catalog settings</a> to set-up your catalog.', array('!url' => url('admin/store/settings/catalog/edit/advanced'))));
+}
+
+/**
+ * Implentation of the hook_uninstall().
+ */
+function uc_advanced_catalog_uninstall() {
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_advanced_catalog%%'");
+}

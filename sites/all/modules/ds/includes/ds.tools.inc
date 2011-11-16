@@ -1,5 +1,4 @@
 <?php
-// $Id: ds.tools.inc,v 1.1.2.25 2010/09/02 21:22:25 swentel Exp $
 
 /**
  * @file
@@ -132,7 +131,7 @@ function ds_export(&$form_state) {
               continue;
             }
           }
-          $options[$module .'-'. $type->type] = $type->name;
+          $options[$module .'-'. $type->type] = check_plain($type->name);
           if ($global_exclude == TRUE) {
             $ds_variables[] = $module .'_type_'. $tkey;
           }
@@ -383,6 +382,9 @@ function ds_export_stylesheet() {
 
           // Get any configured fields.
           $field_settings = ds_default_value($display_settings, $key, 'fields');
+          if (empty($field_settings)) {
+            continue;
+          }
           foreach ($field_settings as $field_key => $field) {
             if ($field['region'] != 'disabled') {
 

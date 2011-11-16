@@ -1,0 +1,16 @@
+
+name = Ubercart advanced catalog
+description = Provide filter and view managment for Ubercart catalog.
+dependencies[] = uc_catalog
+dependencies[] = ds
+dependencies[] = ds_ui
+dependencies[] = nd
+package = "Ubercart - extra"
+
+
+; Information added by drupal.org packaging script on 2011-05-31
+version = "6.x-2.x-dev"
+core = "6.x"
+project = "uc_advanced_catalog"
+datestamp = "1306844631"
+

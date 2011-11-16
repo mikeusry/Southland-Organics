@@ -1,0 +1,57 @@
+
+/* garland theme form fix */
+#center #uc-advanced-catalog-pager-form {
+  margin-bottom: 0;
+}
+/* filters */
+#catalog-filters {
+  padding:0.3em 0.5em;
+  margin-top: 5px;
+  border: 1px solid #D3E7F4;
+  text-align: center;
+}
+.catalog-filter {
+  border-right: 1px solid #D3E7F4;
+  display: inline;
+  padding: 0 5px;
+}
+#catalog-filters .first {
+  padding-left: 0;
+}
+#catalog-filters .last {
+  padding-right: 0;
+  border-right: 0 none;
+}
+.catalog-filter .form-item {
+  display: inline;
+  margin: 5px 0;
+}
+.filter-order{
+
+}
+.filter-limit{
+
+}
+.filter-mode{
+
+}
+.filter-sort{
+
+}
+.filter-extra{
+
+}
+.catalog-filter .form-submit {
+  margin: 5px 0;
+}
+/* product grid */
+.category-grid-products .node {
+  border-bottom: 0 none;
+  margin: 0;
+  padding: 0;
+}
+/* administration */
+#uc-advanced-catalog-settings-form .uac-filters {
+  float: left;
+  margin-right: 5px;
+}

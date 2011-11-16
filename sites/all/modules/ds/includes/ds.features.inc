@@ -1,5 +1,4 @@
 <?php
-// $Id: ds.features.inc,v 1.1.2.17 2010/10/28 14:21:52 swentel Exp $
 
 /**
  * @file
@@ -71,7 +70,7 @@ function ds_features_export($data, &$export, $module_name = '') {
  * Implementation of hook_features_pipe_component_alter() for ds component.
  * Add node type variables on behalf of nd.
  */
-function ds_features_pipe_ds_alter(&$pipe, $data, $export, $module_name) {
+function ds_features_pipe_ds_alter(&$pipe, $data, $export) {
   foreach ($data as $nd_type) {
     if (substr($nd_type, 0, 3) == 'nd-') {
       $pipe['variable'][] = 'nd_display_settings_'. str_replace('nd-', '', $nd_type);

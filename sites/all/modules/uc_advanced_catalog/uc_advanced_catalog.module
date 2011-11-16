@@ -1,0 +1,584 @@
+<?php
+
+/**
+ * @file
+ * Advanced catalog module.
+ * Add filter and views managment to ubercart catalog.
+ *
+ */
+
+// admin pages
+require_once(drupal_get_path('module', 'uc_advanced_catalog') .'/uc_advanced_catalog.admin.inc');
+// catalog browsing
+require_once(drupal_get_path('module', 'uc_advanced_catalog') .'/uc_advanced_catalog.pages.inc');
+// main filters
+require_once(drupal_get_path('module', 'uc_advanced_catalog') .'/uc_advanced_catalog.filters.inc');
+
+/******************************************************************************
+ * Drupal Hooks                                                               *
+ ******************************************************************************/
+
+/**
+ * Implementation of hook_menu().
+ */
+function uc_advanced_catalog_menu() {
+  $items = array();
+  $items['admin/store/settings/catalog/edit/advanced'] = array(
+    'title' => 'Advanced catalog settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_advanced_catalog_settings_form'),
+    'access arguments' => array('administer catalog'),
+    'weight' => -6,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/store/settings/catalog/edit/table'] = array(
+    'title' => 'Product table settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_advanced_catalog_table_settings_form'),
+    'access arguments' => array('administer catalog'),
+    'weight' => -4,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/store/settings/catalog/edit/list'] = array(
+    'title' => 'Product list settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_advanced_catalog_list_settings_form'),
+    'access arguments' => array('administer catalog'),
+    'weight' => -3,
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_theme_registry_alter().
+ */
+function uc_advanced_catalog_theme_registry_alter(&$theme_registry) {
+  // override uc_catalog_browse function
+  $theme_registry['uc_catalog_browse']['function'] = 'uc_advanced_catalog_browse';
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function uc_advanced_catalog_theme() {
+  // core themes
+  $themes = array(
+    'uc_advanced_catalog_settings_filters' => array(
+      'arguments' => array('form' => NULL),
+    ),
+    'uc_advanced_catalog_grid_settings' => array(
+      'arguments' => array('form' => NULL),
+    ),
+    'uc_advanced_catalog_pager_form' => array(
+      'arguments' => array('form' => NULL),
+    ),
+    'uc_advanced_catalog_products' => array(
+      'arguments' => array(
+        'products' => NULL,
+        'mode' => 'grid',
+      ),
+    ),
+    // node displays image handlers
+    'uc_advanced_catalog_image_all' => array(
+      'arguments' => array('node' => NULL),
+    ),
+    // price theme handlers
+    // @todo: simplify...
+    'uc_advanced_catalog_sell_price' => array(
+      'arguments' => array('node' => NULL),
+    ),
+    'uc_advanced_catalog_sell_price_themed' => array(
+      'arguments' => array('node' => NULL),
+    ),
+    'uc_advanced_catalog_list_price' => array(
+      'arguments' => array('node' => NULL),
+    ),
+    'uc_advanced_catalog_list_price_themed' => array(
+      'arguments' => array('node' => NULL),
+    ),
+    'uc_advanced_catalog_cost_price' => array(
+      'arguments' => array('node' => NULL),
+    ),
+  );
+  // adding themes for mode display
+  // @todo: register display to add hook
+  $modes = array('grid', 'list', 'table');
+  foreach ($modes AS $mode) {
+    $themes += array(
+      'uc_advanced_catalog_products_'. $mode => array(
+        'arguments' => array('products' => NULL),
+      ),
+    );
+    $themes += array(
+      'uc_advanced_catalog_image_'. $mode => array(
+        'arguments' => array('node' => NULL),
+      ),
+    );
+  }
+  return $themes;
+}
+
+/**
+ * Implementation of hook_form().
+ *
+ * @param $form_state
+ *   Array of form state (formAPI).
+ * @param $defaults
+ *   Array of defaults and current filters values.
+ * @param $variables
+ *   Array of variables of the view pass to filters.
+ * @return
+ *   form array().
+ */
+function uc_advanced_catalog_pager_form($form_state, $defaults, $variables) {
+  $form['#attributes'] = array('name' => 'uac_filters');
+  // get filters
+  $filters = uc_advanced_catalog_catalog_filters($defaults, $variables);
+  foreach ($filters AS $values) {
+    if (is_array($values)) {
+      $form += _uc_advanced_catalog_filter_view($values, $defaults);
+    }
+  }
+  // js enabled ?
+  // @todo: add administrative option to enable this button
+  if (!isset($_COOKIE['has_js']) || ($_COOKIE['has_js'] != 1)) {
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Apply'),
+    '#weight' => 100,
+    );
+  }
+  /*
+  $form['reset'] = array(
+    '#type' => 'button',
+    '#value' => t('Reset'),
+    '#weight' => 100,
+  );
+  */
+  return $form;
+}
+
+/**
+ * Theme pager form display.
+ */
+function theme_uc_advanced_catalog_pager_form($form) {
+  $elements = array();
+  $i = 0;
+  $output = '<div id="catalog-filters">';
+  foreach (element_children($form) AS $key => $element) {
+    // render system form hidden
+    if ($element == 'form_build_id' || $element == 'form_token' || $element == 'form_id') {
+      $output .= drupal_render($form[$element]);
+    }
+    else {
+      // advanced_catalog filters
+      $elements[$key] = $form[$element];
+      $i++;
+    }
+  }
+  // construction adding classes for css
+  $j = 0;
+  foreach ($elements AS $key => $element) {
+    $j++;
+    $class = 'catalog-filter '. $element['#id'];
+    $key == 0 ? $class .= ' first': '';
+    $i == $j ? $class .= ' last': '';
+    $output .= '<div class="'. $class .'">';
+    $output .= drupal_render($elements[$key]);
+    $output .= '</div>';
+  }
+  $output .= '<br class="clear">';
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Construct sortable line on filters settings form
+ *
+ * @param $values
+ *   array() of form value.
+ * @return
+ *   form array().
+ */
+function _uc_advanced_catalog_filter_edit($values = NULL) {
+  $form = array();
+
+  if ($values && is_array($values)) {
+    $form['#summary callback'] = 'summarize_form';
+    //edit mode, remove view informations
+    $values += $values['edit'];
+    unset($values['view'], $values['edit']);
+
+    // element construction
+    $name = $values['name'];
+    // enable filter col
+    $values += array(
+      '#type' => 'checkbox',
+      '#default_value' => variable_get('uc_advanced_catalog_'. $name, $values['#default_state']),
+      );
+    $form['title'] = _uc_advanced_catalog_element('uc_advanced_catalog_'. $name, $values);
+
+    // default col
+    if ($values['default'] && is_array($values['default'])) {
+      // adding default value from stored variable
+      $variable_name = 'uc_advanced_catalog_'. $name .'_default';
+      $default = $values['default']['#default_value'];
+      $values['default']['#default_value'] = variable_get($variable_name, $default);
+      $form['default'][$variable_name] = $values['default'];
+    }
+    else {
+      $form['default'] = array('#value' => t('n/a'));
+    }
+
+    // options col
+    if ($values['options'] && is_array($values['options'])) {
+      if ($values['options']['#multiple'] == TRUE) {
+        // multiple options
+        $form['options'] = array();
+        $i = 0;
+        foreach ($values['options'] AS $name => $options) {
+          if ($name != '#multiple') {
+            $i++;
+            $name = 'uc_advanced_catalog_'. $values['name'] .'_option_'. $name;
+            $options['#default_value'] = variable_get($name, $options['#default_value']);
+            $form['options'] += _uc_advanced_catalog_element($name, $options);
+            // some usability theming, 3 per cols
+            if ($i % 3 == 1) {
+              $form['options'][$name]['#prefix'] = '<div class="uac-filters">';
+            }
+            if ($i % 3 == 0) {
+              $form['options'][$name]['#suffix'] = '</div>';
+            }
+          }
+        }
+      }
+      else {
+        // single option
+        $variable_name = 'uc_advanced_catalog_'. $name .'_options';
+        $values['options']['#default_value'] = variable_get($variable_name, $values['options']['#default_value']);
+        $form['options'] = _uc_advanced_catalog_element($variable_name, $values['options']);
+      }
+    }
+    else {
+      $form['options'] = array('#value' => t('n/a'));
+    }
+
+    // sort col (hide by draggable)
+    $form['sort'] = array(
+      '#type' => 'weight',
+      '#default_value' => variable_get('uc_advanced_catalog_'. $values['name'] .'_weight', $values['#weight']),
+    );
+
+    // hidden system name (used to register filters)
+    $form['name'] = array(
+      '#type' => 'hidden',
+      '#value' => $values['name'],
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Construct filters on pager display.
+ *
+ * @param $values
+ *   array() of form value.
+ * @param $defaults
+ *   array() of defaults value.
+ * @return
+ *   form array().
+ */
+function _uc_advanced_catalog_filter_view($values = NULL, $defaults = NULL) {
+  $data = array();
+  // Get existing filters
+  $filters = variable_get(
+    'uc_advanced_catalog_filters_registered',
+    array('extra' => 1, 'order' => 1, 'sort' => 1, 'limit' => 1, 'mode' => 1)
+  );
+  if ($filters[$values['name']] == 1) {
+    //view mode, remove edit informations
+    $values += $values['view'];
+    unset($values['edit'], $values['view']);
+
+    // type
+    // $values['name'] == 'cck_field_ouinon-1-product' ? dsm($values):'';
+    switch ($values['#type']) {
+      case 'select':
+      case 'checkbox':
+          //@TODO: javascript gracefull degrade
+          $values['#attributes'] = array('onchange' => 'this.form.submit();', 'class' => 'pager-'. $values['name'] .'-item');
+          unset($values['#value']);
+          $values['#default_value'] = $defaults[$values['name']];
+        break;
+      default:
+        unset($values['#attributes']);
+        $values['#attributes'] = array('class' => 'pager-'. $values['name'] .'-item');
+    }
+
+    // weight
+    $values['#weight'] = variable_get('uc_advanced_catalog_'. $values['name'] .'_weight', $values['#weight'] ? $values['#weight'] : 0);
+
+    // element construction
+    $data = _uc_advanced_catalog_element($values['name'], $values);
+  }
+  return $data;
+}
+
+/**
+ * Helper to build a single form element
+ *
+ * @param $names
+ *   string name of the element.
+ * @param $values
+ *   array() of values.
+ * @return
+ *   element array().
+ */
+function _uc_advanced_catalog_element($name, $values) {
+  $element[$name] = array();
+  foreach ($values AS $key => $value) {
+    if (drupal_substr($key, 0, 1) == '#') {
+      $element[$name] += array($key => $value);
+    }
+  }
+  $element[$name]['#id'] = 'filter-'. $name;
+  return $element;
+}
+
+/**
+ * Get default or current values for filters state.
+ *
+ * @return
+ *   default values array().
+ *   priority: request values, session, default filter
+ */
+function _uc_advanced_catalog_default() {
+  // Get existing filters
+  $filters = variable_get(
+    'uc_advanced_catalog_filters_registered',
+    array('extra' => 1, 'order' => 1, 'sort' => 1, 'limit' => 1, 'mode' => 1)
+  );
+  $defaults = array();
+  if ($filters) {
+    foreach ($filters AS $name => $state) {
+      // POST and GET handled
+      if ($_REQUEST[$name]) {
+        $defaults[$name] = $_REQUEST[$name];
+        $_SESSION['uc_advanced_catalog'][$name] = $defaults[$name];
+      }
+      elseif ($_SESSION['uc_advanced_catalog'][$name]) {
+        $defaults[$name] = $_SESSION['uc_advanced_catalog'][$name];
+      }
+      elseif (variable_get('uc_advanced_catalog_'. $name .'_default', FALSE)) {
+        $defaults[$name] = variable_get('uc_advanced_catalog_'. $name .'_default', '');
+      }
+    }
+  }
+  return $defaults;
+}
+
+/******************************************************************************
+ * Content Hooks                                                              *
+ ******************************************************************************/
+
+/**
+ * Implementation of hook_content_build_modes().
+ */
+function uc_advanced_catalog_content_build_modes() {
+  return array(
+    'uc_advanced_catalog' => array(
+      'title' => t('Catalog'),
+      'build modes' => array(
+        'grid' => array(
+          'title' => t('Catalog grid'),
+        ),
+        'list' => array(
+          'title' => t('Catalog list'),
+        ),
+      ),
+    ),
+  );
+}
+
+/******************************************************************************
+ * Views Hooks                                                                *
+ ******************************************************************************/
+
+/**
+ * Implementing hook_views_api
+ */
+function uc_advanced_catalog_views_api() {
+  return array(
+    'api' => 2.0,
+    'path' => drupal_get_path('module', 'uc_advanced_catalog') .'/includes',
+  );
+}
+
+/**
+ * Implementation of hook_ds_default_settings().
+ */
+function uc_advanced_catalog_ds_default_settings() {
+  include_once('uc_advanced_catalog.ds_default.inc');
+  return _uc_advanced_catalog_ds_default_settings();
+}
+
+/**
+ * Implementation of hook_ds_fields().
+ */
+function uc_advanced_catalog_ds_fields() {
+  include_once('uc_advanced_catalog.ds_default.inc');
+  return _uc_advanced_catalog_ds_fields();
+}
+
+/**
+ * Display a formatted image for grid display.
+ *
+ * @param $node
+ *   An object of node.
+ * @ingroup themeable
+ */
+function theme_uc_advanced_catalog_image_grid($node) {
+  return uc_advanced_catalog_render_image($node, 'grid');
+}
+
+/**
+ * Display a formatted image for table display.
+ *
+ * @param $node
+ *   An object of node.
+ * @ingroup themeable
+ */
+function theme_uc_advanced_catalog_image_table($node) {
+  return uc_advanced_catalog_render_image($node, 'table');
+}
+
+/**
+ * Display a formatted image for list display.
+ *
+ * @param $node
+ *   An object of node.
+ * @ingroup themeable
+ */
+function theme_uc_advanced_catalog_image_list($node) {
+  return uc_advanced_catalog_render_image($node, 'list');
+}
+
+/**
+ * Display a formatted all images as ubercart provide.
+ *
+ * @param $node
+ *   An object of node.
+ * @ingroup themeable
+ */
+function theme_uc_advanced_catalog_image_all($node) {
+  $node = $node['object'];
+  // code from ubercart uc_product_view() on uc_product.module
+  if (module_exists('imagecache') && ($field = variable_get('uc_image_'. $node->type, '')) && isset($node->$field) && file_exists($node->{$field}[0]['filepath'])) {
+    return theme('uc_product_image', $node->$field);
+  }
+}
+
+/**
+ * Generate image html
+ *
+ * @param $node
+ *   An object of node.
+ * @param $mode
+ *   An string of mode, use to get imagecache preset.
+ * @param $preset
+ *   An string for default preset (ubercart default).
+ */
+function uc_advanced_catalog_render_image($node, $mode = 'grid', $preset = 'product_list') {
+  $node = $node['object'];
+  // code from ubercart theme_uc_catalog_browse() on uc_catalog.pages.inc
+  if (module_exists('imagecache') && ($field = variable_get('uc_image_'. $node->type, '')) && isset($node->$field) && file_exists($node->{$field}[0]['filepath'])) {
+    $preset = variable_get('uc_advanced_catalog_'. $mode .'_imagecache', $preset);
+    return l(theme('imagecache', $preset, $node->{$field}[0]['filepath'], $node->title, $node->title), 'node/'. $node->nid, array('html' => TRUE));
+  }
+}
+
+/**
+ * Display a formatted sell price.
+ *
+ * @param $node
+ *   An object of node.
+ * @ingroup themeable
+ */
+function theme_uc_advanced_catalog_sell_price($node) {
+  return uc_advanced_catalog_render_price($node);
+}
+
+/**
+ * Display a themed sell price.
+ *
+ * @param $node
+ *   An object of node.
+ * @ingroup themeable
+ */
+function theme_uc_advanced_catalog_sell_price_themed($node) {
+  return uc_advanced_catalog_render_price($node, 'themed');
+}
+
+/**
+ * Display a formatted list price.
+ *
+ * @param $node
+ *   An object of node.
+ * @ingroup themeable
+ */
+function theme_uc_advanced_catalog_list_price($node) {
+  return uc_advanced_catalog_render_price($node, 'formatted', 'list_price');
+}
+
+/**
+ * Display a formatted themed list price.
+ *
+ * @param $node
+ *   An object of node.
+ * @ingroup themeable
+ */
+function theme_uc_advanced_catalog_list_price_themed($node) {
+  return uc_advanced_catalog_render_price($node, 'themed', 'list_price');
+}
+
+/**
+ * Display a formatted cost price.
+ *
+ * @param $node
+ *   An object of node.
+ * @ingroup themeable
+ */
+function theme_uc_advanced_catalog_cost_price($node) {
+  if (user_access('administer products')) {
+    return uc_advanced_catalog_render_price($node, 'formatted', 'cost');
+  }
+  else {
+    return '';
+  }
+}
+
+/**
+ * Generate price html
+ *
+ * @param $node
+ *   An object of node.
+ * @param $mode
+ *   An string of mode, 'formatted' or 'themed', reference to uc_price().
+ * @param $price
+ *   An string for price concerned, available: 'sell_price', 'list_price', 'cost'.
+ */
+function uc_advanced_catalog_render_price($node, $mode = 'formatted', $price = 'sell_price') {
+  $context = array(
+    'revision' => $mode,
+    'type' => 'product',
+    'subject' => array('node' => $node['object']),
+  );
+  if ($node['object']->{$price} > 0) {
+    return uc_price($node['object']->{$price}, $context);
+  }
+  else {
+    return '';
+  }
+}

@@ -1,5 +1,4 @@
 <?php
-// $Id: theme_ui.inc,v 1.1.2.12 2010/06/30 10:28:00 swentel Exp $
 
 /**
  * @file
@@ -228,6 +227,9 @@ function template_preprocess_ds_display_overview_views_form(&$vars) {
       // Render the display fields
       if ($child == $build_mode) {
         $row->{$child}->indentation = theme('indentation', $element[$child]['#depth']);
+        if (empty($element[$child]['css-class']['#options'])) {
+          $element[$child]['css-class']['#access'] = FALSE;
+        }
         $row->{$child}->class = drupal_render($element[$child]['css-class']);
         $row->{$child}->label = drupal_render($element[$child]['label']);
 
@@ -305,7 +307,7 @@ function theme_ds_buildmodes_matrix_form($form) {
   $rows = array();
   foreach ($form['#types'] as $key => $type) {
     $row = array();
-    $row[] = array('data' => drupal_ucfirst($type->name));
+    $row[] = array('data' => check_plain(drupal_ucfirst($type->name)));
     foreach ($form['#build_modes'] as $bkey => $mode) {
       $row[] = array('data' => drupal_render($form['exclude'][$key][$key .'-'. $bkey]));
     }
