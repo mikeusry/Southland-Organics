@@ -1,0 +1,15 @@
+name = Payment
+description = Defines an API to let payment modules interact with the cart.
+dependencies[] = ca
+dependencies[] = uc_order
+dependencies[] = uc_store
+package = Ubercart - core (optional)
+core = 6.x
+php = 5.0
+
+; Information added by drupal.org packaging script on 2011-11-17
+version = "6.x-2.x-dev"
+core = "6.x"
+project = "ubercart"
+datestamp = "1321491301"
+

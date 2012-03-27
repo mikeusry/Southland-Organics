@@ -1,0 +1,13 @@
+name = Product
+description = REQUIRED. Provides content types to represent items in an online store. Imagecache and CCK Image field recommended.
+dependencies[] = uc_store
+package = Ubercart - core
+core = 6.x
+php = 5.0
+
+; Information added by drupal.org packaging script on 2011-11-17
+version = "6.x-2.x-dev"
+core = "6.x"
+project = "ubercart"
+datestamp = "1321491301"
+

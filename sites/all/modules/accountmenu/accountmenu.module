@@ -158,8 +158,7 @@ function accountmenu_translated_menu_link_alter(&$item) {
     // no check_plain() here because menu display will do it
     $item['options']['accountmenu_link_title'] = $item['link_title'];
     // we prefer to use '@' key but retain the '!' key for backward compatibility
-    $item['localized_options']['attributes']['title'] = t($item['localized_options']['attributes']['title'], array('@name' => $name, '@realname' => $realname, '!name' => $name, '!realname' => $realname));
-    $item['title'] = $item['link_title'] = t($item['link_title'], array('@name' => $name, '@realname' => $realname, '!name' => $name, '!realname' => $realname));
+    $item['title'] = $item['link_title'] = t($item['link_title'], array('@name' => $name, '@realname' => $realname));
   }
 }
 

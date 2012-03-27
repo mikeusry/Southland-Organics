@@ -1,0 +1,48 @@
+------------------------------------------------------------------------------
+6.x-2.1 2012-01-25
+------------------------------------------------------------------------------
+- #1415070 by xtfer: Fix incorrect menu callbacks
+
+------------------------------------------------------------------------------
+6.x-2.0 2012-01-24
+------------------------------------------------------------------------------
+- #1375990 by xtfer: Fix function field types called from code
+- #1412028 by iankp: Fix an issue where region styles were not output
+- Fix a PHP notice when ignored fields are not actually present on the object
+- Fix broken multigroup list formatter
+- New inline field formatter
+- New comma separated list formatter for multigroup subgroups
+- Make sure fields in multigroups get passed through DS for theming
+- Minor performance improvements
+- Show real field names in Layout UI
+- Fix an issue where incorrect values were passed to the multigroup list theme 
+  function
+- New function to get element children
+
+------------------------------------------------------------------------------
+6.x-2.0-rc1 2011-11-14
+------------------------------------------------------------------------------
+- #1176182 by zhangtaihao: OptGroups for field and region style
+- Fix broken preprocess and ignored fields
+- Render regions in the right order
+- Pass the correct values to plugins
+
+------------------------------------------------------------------------------
+6.x-2.0-alpha1 2011-11-14
+------------------------------------------------------------------------------
+Multigroup support
+Improved internal API
+Improved database storage
+Improved administration user experience
+
+- #1293420 by Feng-Shui: Custom build mode key name can exceed db field size.
+- #1168130 by swentel: backport some of the techniques of D7 storage.
+- #1169466 by grahamgilchrist: do not use block templates if content is empty.
+- #1003380 by vadym.kononenko: views field class should be added by default.
+- #1004096 by swentel: deleting a build mode breaks synced build modes.
+- #1016664 by jstoller: Add field count variable to groups.
+- #1059336 by jstoller: Add field variables containing groups and regions.
+- #1221036 by jstoller: fix notice due to function param change in features.
+- #1230038 by swentel: fix (public) xss exploit.
+- Hide the classes select box on views fields if there are no styles.
+- Add missing human names for field type constants

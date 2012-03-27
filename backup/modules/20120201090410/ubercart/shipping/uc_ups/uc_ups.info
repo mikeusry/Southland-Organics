@@ -1,0 +1,13 @@
+name = UPS
+description = Integrates UPS Rates and Services Selection and Shipping Online Tools.
+dependencies[] = uc_quote
+package = Ubercart - fulfillment
+core = 6.x
+php = 5.0
+
+; Information added by drupal.org packaging script on 2011-11-17
+version = "6.x-2.x-dev"
+core = "6.x"
+project = "ubercart"
+datestamp = "1321491301"
+

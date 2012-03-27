@@ -1,6 +1,7 @@
 /* @override 
 	http://www.southlandorganics.com/sites/all/themes/southland/css/local.css?M
 	http://www.southlandorganics.com/sites/all/themes/southland/css/local.css?N
+	http://www.southlandorganics.com/sites/all/themes/southland/css/local.css?c
 */
 
 div.breadcrumb {
@@ -551,6 +552,11 @@ div#primary-menu-inner.primary-menu-inner {
 .primary-menu-inner ul.menu li a:hover,
 .primary-menu-inner ul.menu li a:focus {
   color: #fff;
+}
+
+#primary-menu-inner ul.menu.sf-menu.sf-js-enabled li.leaf.last a {
+	background-color: black;
+	color: #6C9930;
 }
 
 

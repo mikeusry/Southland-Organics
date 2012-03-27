@@ -12,7 +12,7 @@ function quicktabs_list() {
   $rows = array();
   while ($row = db_fetch_object($result)) {
     $tablerow = array(
-      array('data' => $row->title),
+      array('data' => check_plain($row->title)),
       array('data' => l(t('Edit'), 'admin/build/quicktabs/'. $row->qtid .'/edit')),
       array('data' => l(t('Clone'), 'admin/build/quicktabs/'. $row->qtid .'/clone')),
       array('data' => l(t('Delete'), 'admin/build/quicktabs/'. $row->qtid .'/delete')),

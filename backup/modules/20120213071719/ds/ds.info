@@ -1,0 +1,11 @@
+name = "Display suite"
+description = "Manage the display of your data objects."
+core = "6.x"
+package = "Display suite"
+
+; Information added by drupal.org packaging script on 2012-01-25
+version = "6.x-2.1"
+core = "6.x"
+project = "ds"
+datestamp = "1327457762"
+
